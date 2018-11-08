@@ -74,14 +74,14 @@ except EnvironmentError:
         __("LICENSE file could not be found. Are you sure you didn't delete it?")
     )
 
-# Version check. This script is only compatible with FreeCAD 0.16 or higher
+# Version check. This script is only compatible with FreeCAD 0.17 or higher
 is_compatible = utils.is_compatible_version()
 if not is_compatible:
     guiutils.error_dialog(
-        __("This FreeCAD version is not compatible. Please update FreeCAD to version 0.16 or higher.")
+        __("This FreeCAD version is not compatible. Please update FreeCAD to version 0.17 or higher.")
     )
     raise EnvironmentError(
-        __("This FreeCAD version is not compatible. Please update FreeCAD to version 0.16 or higher.")
+        __("This FreeCAD version is not compatible. Please update FreeCAD to version 0.17 or higher.")
     )
 
 # Set QT to UTF-8 encoding
@@ -139,8 +139,17 @@ constants_label.setWordWrap(True)
 constants_button = QtGui.QPushButton(__("Define\nConstants"))
 constants_button.setToolTip(__("Use this button to define case constants,\nsuch as gravity or fluid reference density."))
 
+
 # Opens constant definition window on button click
-constants_button.clicked.connect(lambda: guiutils.def_constants_window(data))
+def on_constants_button_pressed():
+    constants_window = dsphwidgets.ConstantsDialog(data)
+
+    # Constant definition window behaviour and general composing
+    constants_window.resize(600, 400)
+    constants_window.exec_()
+
+
+constants_button.clicked.connect(on_constants_button_pressed)
 widget_state_elements['constants_button'] = constants_button
 
 # Help button that opens a help URL for DesignSPHysics
@@ -156,7 +165,18 @@ setup_button.clicked.connect(lambda: guiutils.def_setup_window(data))
 # Execution parameters button.
 execparams_button = QtGui.QPushButton(__("Execution\nParameters"))
 execparams_button.setToolTip(__("Change execution parameters, such as\ntime of simulation, viscosity, etc."))
-execparams_button.clicked.connect(lambda: guiutils.def_execparams_window(data))
+
+
+# Opens execution parameters window on button click
+def on_execparams_button_presed():
+    execparams_window = dsphwidgets.ExecutionParametersDialog(data)
+
+    # Execution parameters window behaviour and general composing
+    execparams_window.resize(800, 600)
+    execparams_window.exec_()
+
+
+execparams_button.clicked.connect(on_execparams_button_presed)
 widget_state_elements['execparams_button'] = execparams_button
 
 # Logo. Made from a label. Labels can have image as well as text.
@@ -195,6 +215,7 @@ ccfilebuttons_layout = QtGui.QHBoxLayout()
 ccsecondrow_layout = QtGui.QHBoxLayout()
 ccthirdrow_layout = QtGui.QHBoxLayout()
 ccfourthrow_layout = QtGui.QHBoxLayout()
+ccfivethrow_layout = QtGui.QHBoxLayout()
 casecontrols_label = QtGui.QLabel("<b>{}</b>".format(__("Pre-processing")))
 
 # New Case button
@@ -209,6 +230,7 @@ casecontrols_menu_newdoc = QtGui.QMenu()
 casecontrols_menu_newdoc.addAction(guiutils.get_icon("new.png"), __("New"))
 casecontrols_menu_newdoc.addAction(guiutils.get_icon("new.png"), __("Import FreeCAD Document"))
 casecontrols_bt_newdoc.setMenu(casecontrols_menu_newdoc)
+casecontrols_menu_newdoc.resize(60, 60)
 
 # Save Case button and dropdown
 casecontrols_bt_savedoc = QtGui.QToolButton()
@@ -219,7 +241,7 @@ casecontrols_bt_savedoc.setToolTip(__("Saves the case."))
 casecontrols_bt_savedoc.setIcon(guiutils.get_icon("save.png"))
 casecontrols_bt_savedoc.setIconSize(QtCore.QSize(28, 28))
 casecontrols_menu_savemenu = QtGui.QMenu()
-casecontrols_menu_savemenu.addAction(guiutils.get_icon("save.png"), __("Save and run GenCase"))
+# casecontrols_menu_savemenu.addAction(guiutils.get_icon("save.png"), __("Save and run GenCase"))
 casecontrols_menu_savemenu.addAction(guiutils.get_icon("save.png"), __("Save as..."))
 casecontrols_bt_savedoc.setMenu(casecontrols_menu_savemenu)
 widget_state_elements['casecontrols_bt_savedoc'] = casecontrols_bt_savedoc
@@ -267,6 +289,15 @@ widget_state_elements['toggle3dbutton'] = toggle3dbutton
 casecontrols_bt_special = QtGui.QPushButton(__("Special"))
 casecontrols_bt_special.setToolTip(__("Special actions for the case."))
 widget_state_elements['dampingbutton'] = casecontrols_bt_special
+
+# Run GenCase button
+rungencase_bt = QtGui.QPushButton(__("Run GenCase"))
+rungencase_bt.setStyleSheet("QPushButton {font-weight: bold; }")
+rungencase_bt.setToolTip(__("This pre-processing tool creates the initial state of the particles (position, velocity "
+                            "and density) and defines the different SPH parameters for the simulation."))
+rungencase_bt.setIcon(guiutils.get_icon("run_gencase.png"))
+rungencase_bt.setIconSize(QtCore.QSize(12, 12))
+widget_state_elements['rungencase_bt'] = rungencase_bt
 
 
 def on_new_case(prompt=True):
@@ -530,6 +561,15 @@ def on_save_case(save_as=None):
 def on_save_with_gencase():
     """ Saves data into disk and uses GenCase to generate the case files."""
 
+    # Check if the gencase is saved, if no shows the following message
+    if data['project_path'] == '':
+        # Warning window about save_case
+        gencase_warning_dialog = QtGui.QMessageBox()
+        gencase_warning_dialog.setWindowTitle(__("Warning!"))
+        gencase_warning_dialog.setText(__("You need save first!"))
+        gencase_warning_dialog.setIcon(QtGui.QMessageBox.Warning)
+        gencase_warning_dialog.exec_()
+
     # Save Case as usual so all the data needed for GenCase is on disk
     on_save_case()
 
@@ -577,21 +617,27 @@ def on_save_with_gencase():
                 # Not an expected result. GenCase had a not handled error
                 error_in_gen_case = True
 
-        # If for some reason GenCase failed
-        if str(process.exitCode()) != "0" or error_in_gen_case:
-            # Multiple possible causes. Let the user know
-            gencase_out_file = open(data['project_path'] + '/' + data['project_name'] + '_out/' + data['project_name'] + ".out", "rb")
-            gencase_failed_dialog = QtGui.QMessageBox()
-            gencase_failed_dialog.setText(__("Error executing GenCase. Did you add objects to the case?. "
-                                             "Another reason could be memory issues. View details for more info."))
-            gencase_failed_dialog.setDetailedText(gencase_out_file.read().split("================================")[1])
-            gencase_failed_dialog.setIcon(QtGui.QMessageBox.Critical)
-            gencase_out_file.close()
-            gencase_failed_dialog.exec_()
-            utils.warning(__("GenCase Failed."))
+        # Check if there is any path, a blank one meant the user cancelled the save file dialog
+        if data['project_path'] != '':
+            # If for some reason GenCase failed
+            if str(process.exitCode()) != "0" or error_in_gen_case:
+                # Multiple possible causes. Let the user know
+                gencase_out_file = open(data['project_path'] + '/' + data['project_name'] + '_out/' + data['project_name'] + ".out", "rb")
+                gencase_failed_dialog = QtGui.QMessageBox()
+                gencase_failed_dialog.setText(__("Error executing GenCase. Did you add objects to the case?. "
+                                                 "Another reason could be memory issues. View details for more info."))
+                gencase_failed_dialog.setDetailedText(gencase_out_file.read().split("================================")[1])
+                gencase_failed_dialog.setIcon(QtGui.QMessageBox.Critical)
+                gencase_out_file.close()
+                gencase_failed_dialog.exec_()
+                utils.warning(__("GenCase Failed."))
 
-        # Save results again so all the data is updated if something changes.
-        on_save_case()
+            # Save results again so all the data is updated if something changes.
+            on_save_case()
+        else:
+            utils.log(__("Saving cancelled."))
+
+
 
 
 def on_newdoc_menu(action):
@@ -604,8 +650,8 @@ def on_newdoc_menu(action):
 
 def on_save_menu(action):
     """ Handles the save button and its dropdown items. """
-    if __("Save and run GenCase") in action.text():
-        on_save_with_gencase()
+    #if __("Save and run GenCase") in action.text():
+    #    on_save_with_gencase()
     if __("Save as...") in action.text():
         on_save_case(save_as=True)
 
@@ -1288,6 +1334,7 @@ def on_special_button():
 # Connect case control buttons to respective handlers
 casecontrols_bt_newdoc.clicked.connect(on_new_case)
 casecontrols_bt_savedoc.clicked.connect(on_save_case)
+rungencase_bt.clicked.connect(on_save_with_gencase)
 casecontrols_menu_newdoc.triggered.connect(on_newdoc_menu)
 casecontrols_menu_savemenu.triggered.connect(on_save_menu)
 casecontrols_bt_loaddoc.clicked.connect(on_load_button)
@@ -1309,12 +1356,14 @@ ccthirdrow_layout.addWidget(casecontrols_bt_addfillbox)
 ccthirdrow_layout.addWidget(casecontrols_bt_addstl)
 ccthirdrow_layout.addWidget(casecontrols_bt_importxml)
 ccfourthrow_layout.addWidget(casecontrols_bt_special)
+ccfivethrow_layout.addWidget(rungencase_bt)
 
 cc_layout.addLayout(cclabel_layout)
 cc_layout.addLayout(ccfilebuttons_layout)
 cc_layout.addLayout(ccthirdrow_layout)
 cc_layout.addLayout(ccsecondrow_layout)
 cc_layout.addLayout(ccfourthrow_layout)
+cc_layout.addLayout(ccfivethrow_layout)
 
 # Defines run window dialog
 # TODO: This should be a custom implementation in a class like RunDialog(QtGui.QDialog)

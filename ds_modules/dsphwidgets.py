@@ -1698,10 +1698,6 @@ class RegularPistonWaveMotionTimeline(QtGui.QWidget):
         self.depth_label = QtGui.QLabel(__("Depth (m): "))
         self.depth_input = QtGui.QLineEdit()
 
-        self.fixed_depth_label = QtGui.QLabel(__("Fixed depth (m): "))
-        self.fixed_depth_input = QtGui.QLineEdit()
-        self.fixed_depth_input.setEnabled(False)
-
         self.piston_dir_label = QtGui.QLabel(
             __("Piston direction (X, Y, Z): "))
         self.piston_dir_x = QtGui.QLineEdit()
@@ -1790,8 +1786,7 @@ class RegularPistonWaveMotionTimeline(QtGui.QWidget):
 
         self.first_row_layout = QtGui.QHBoxLayout()
         [self.first_row_layout.addWidget(x) for x in [self.wave_order_label, self.wave_order_selector,
-                                                      self.depth_label, self.depth_input,
-                                                      self.fixed_depth_label, self.fixed_depth_input]]
+                                                      self.depth_label, self.depth_input]]
 
         self.second_row_layout = QtGui.QHBoxLayout()
         [self.second_row_layout.addWidget(x) for x in [self.piston_dir_label,
@@ -1870,7 +1865,6 @@ class RegularPistonWaveMotionTimeline(QtGui.QWidget):
         self.wave_order_selector.setCurrentIndex(
             int(reg_wave_gen.wave_order) - 1)
         self.depth_input.setText(str(reg_wave_gen.depth))
-        self.fixed_depth_input.setText(str(reg_wave_gen.fixed_depth))
         self.piston_dir_x.setText(str(reg_wave_gen.piston_dir[0]))
         self.piston_dir_y.setText(str(reg_wave_gen.piston_dir[1]))
         self.piston_dir_z.setText(str(reg_wave_gen.piston_dir[2]))
@@ -1916,8 +1910,7 @@ class RegularPistonWaveMotionTimeline(QtGui.QWidget):
         self.awas_enabled.stateChanged.connect(self.on_change)
         self.awas_correction_enabled.stateChanged.connect(
             self._awas_correction_enabled_handler)
-        [x.textChanged.connect(self.on_change) for x in [self.duration_input, self.depth_input,
-                                                         self.fixed_depth_input, self.piston_dir_x,
+        [x.textChanged.connect(self.on_change) for x in [self.duration_input, self.depth_input, self.piston_dir_x,
                                                          self.piston_dir_y, self.piston_dir_z,
                                                          self.wave_height_input, self.wave_period_input,
                                                          self.ramp_input, self.phase_input, self.disksave_periods,
@@ -2007,8 +2000,6 @@ class RegularPistonWaveMotionTimeline(QtGui.QWidget):
         return RegularPistonWaveGen(parent_movement=self.parent_movement,
                                     wave_order=self.wave_order_selector.currentIndex() + 1, start=0,
                                     duration=float(self.duration_input.text()), depth=float(self.depth_input.text()),
-                                    fixed_depth=float(
-                                        self.fixed_depth_input.text()),
                                     piston_dir=[float(self.piston_dir_x.text()),
                                                 float(
                                                     self.piston_dir_y.text()),
@@ -2036,8 +2027,7 @@ class RegularPistonWaveMotionTimeline(QtGui.QWidget):
         [x.setText("0")
          if len(x.text()) is 0
          else x.setText(x.text().replace(",", "."))
-         for x in [self.duration_input, self.depth_input,
-                   self.fixed_depth_input, self.piston_dir_x,
+         for x in [self.duration_input, self.depth_input, self.piston_dir_x,
                    self.piston_dir_y, self.piston_dir_z,
                    self.wave_height_input, self.wave_period_input,
                    self.ramp_input, self.phase_input, self.disksave_periods,
@@ -2081,11 +2071,6 @@ class IrregularPistonWaveMotionTimeline(QtGui.QWidget):
 
         self.depth_label = QtGui.QLabel(__("Depth (m): "))
         self.depth_input = QtGui.QLineEdit()
-
-        self.fixed_depth_label = QtGui.QLabel(__("Fixed depth (m): "))
-        self.fixed_depth_input = QtGui.QLineEdit()
-        self.fixed_depth_input.setEnabled(False)
-        self.fixed_depth_units_label = QtGui.QLabel()
 
         self.piston_dir_label = QtGui.QLabel(
             __("Piston direction (X, Y, Z): "))
@@ -2216,8 +2201,7 @@ class IrregularPistonWaveMotionTimeline(QtGui.QWidget):
 
         self.first_row_layout = QtGui.QHBoxLayout()
         [self.first_row_layout.addWidget(x) for x in [self.wave_order_label, self.wave_order_selector,
-                                                      self.depth_label, self.depth_input,
-                                                      self.fixed_depth_label, self.fixed_depth_input]]
+                                                      self.depth_label, self.depth_input]]
 
         self.second_row_layout = QtGui.QHBoxLayout()
         [self.second_row_layout.addWidget(x) for x in [self.piston_dir_label,
@@ -2331,7 +2315,6 @@ class IrregularPistonWaveMotionTimeline(QtGui.QWidget):
         self.wave_order_selector.setCurrentIndex(
             int(irreg_wave_gen.wave_order) - 1)
         self.depth_input.setText(str(irreg_wave_gen.depth))
-        self.fixed_depth_input.setText(str(irreg_wave_gen.fixed_depth))
         self.piston_dir_x.setText(str(irreg_wave_gen.piston_dir[0]))
         self.piston_dir_y.setText(str(irreg_wave_gen.piston_dir[1]))
         self.piston_dir_z.setText(str(irreg_wave_gen.piston_dir[2]))
@@ -2402,7 +2385,7 @@ class IrregularPistonWaveMotionTimeline(QtGui.QWidget):
 
         [x.textChanged.connect(self.on_change) for x in [self.peak_coef_input, self.waves_input, self.randomseed_input,
                                                          self.serieini_input, self.ramptime_input, self.duration_input,
-                                                         self.depth_input, self.fixed_depth_input, self.piston_dir_x,
+                                                         self.depth_input, self.piston_dir_x,
                                                          self.piston_dir_y, self.piston_dir_z, self.wave_height_input,
                                                          self.wave_period_input, self.savemotion_time_input,
                                                          self.savemotion_timedt_input, self.savemotion_xpos_input,
@@ -2495,8 +2478,6 @@ class IrregularPistonWaveMotionTimeline(QtGui.QWidget):
         return IrregularPistonWaveGen(parent_movement=self.parent_movement,
                                       wave_order=self.wave_order_selector.currentIndex() + 1, start=0,
                                       duration=float(self.duration_input.text()), depth=float(self.depth_input.text()),
-                                      fixed_depth=float(
-                                          self.fixed_depth_input.text()),
                                       piston_dir=[float(self.piston_dir_x.text()),
                                                   float(
                                                       self.piston_dir_y.text()),
@@ -2547,8 +2528,7 @@ class IrregularPistonWaveMotionTimeline(QtGui.QWidget):
         [x.setText("0")
          if len(x.text()) is 0
          else x.setText(x.text().replace(",", "."))
-         for x in [self.duration_input, self.depth_input,
-                   self.fixed_depth_input, self.piston_dir_x,
+         for x in [self.duration_input, self.depth_input, self.piston_dir_x,
                    self.piston_dir_y, self.piston_dir_z,
                    self.wave_height_input, self.wave_period_input,
                    self.peak_coef_input, self.randomseed_input,
@@ -2599,10 +2579,6 @@ class RegularFlapWaveMotionTimeline(QtGui.QWidget):
         self.depth_label = QtGui.QLabel(__("Depth (m): "))
         self.depth_input = QtGui.QLineEdit()
 
-        self.fixed_depth_label = QtGui.QLabel(__("Fixed depth (m): "))
-        self.fixed_depth_input = QtGui.QLineEdit()
-        self.fixed_depth_input.setEnabled(False)
-
         self.flap_axis_0_label = QtGui.QLabel(
             __("Flap axis 0 (X, Y, Z): "))
         self.flap_axis_0_x = QtGui.QLineEdit()
@@ -2648,8 +2624,7 @@ class RegularFlapWaveMotionTimeline(QtGui.QWidget):
 
         self.first_row_layout = QtGui.QHBoxLayout()
         [self.first_row_layout.addWidget(x) for x in [self.wave_order_label, self.wave_order_selector,
-                                                      self.depth_label, self.depth_input,
-                                                      self.fixed_depth_label, self.fixed_depth_input]]
+                                                      self.depth_label, self.depth_input]]
 
         self.second_row_layout = QtGui.QHBoxLayout()
         [self.second_row_layout.addWidget(x) for x in [self.flap_axis_0_label,
@@ -2694,7 +2669,6 @@ class RegularFlapWaveMotionTimeline(QtGui.QWidget):
         self.wave_order_selector.setCurrentIndex(
             int(reg_wave_gen.wave_order) - 1)
         self.depth_input.setText(str(reg_wave_gen.depth))
-        self.fixed_depth_input.setText(str(reg_wave_gen.fixed_depth))
         self.flap_axis_0_x.setText(str(reg_wave_gen.flapaxis0[0]))
         self.flap_axis_0_y.setText(str(reg_wave_gen.flapaxis0[1]))
         self.flap_axis_0_z.setText(str(reg_wave_gen.flapaxis0[2]))
@@ -2715,7 +2689,6 @@ class RegularFlapWaveMotionTimeline(QtGui.QWidget):
     def _init_connections(self):
         self.wave_order_selector.currentIndexChanged.connect(self.on_change)
         [x.textChanged.connect(self.on_change) for x in [self.duration_input, self.depth_input,
-                                                         self.fixed_depth_input,
                                                          self.variable_draft_input, self.flap_axis_0_x,
                                                          self.flap_axis_0_y, self.flap_axis_0_z,
                                                          self.flap_axis_1_x,
@@ -2736,8 +2709,6 @@ class RegularFlapWaveMotionTimeline(QtGui.QWidget):
         return RegularFlapWaveGen(parent_movement=self.parent_movement,
                                   wave_order=self.wave_order_selector.currentIndex() + 1, start=0,
                                   duration=float(self.duration_input.text()), depth=float(self.depth_input.text()),
-                                  fixed_depth=float(
-                                      self.fixed_depth_input.text()),
                                   flapaxis0=[float(self.flap_axis_0_x.text()),
                                              float(
                                                  self.flap_axis_0_y.text()),
@@ -2769,8 +2740,7 @@ class RegularFlapWaveMotionTimeline(QtGui.QWidget):
         [x.setText("0")
          if len(x.text()) is 0
          else x.setText(x.text().replace(",", "."))
-         for x in [self.duration_input, self.depth_input,
-                   self.fixed_depth_input, self.flap_axis_0_x,
+         for x in [self.duration_input, self.depth_input, self.flap_axis_0_x,
                    self.flap_axis_0_y, self.flap_axis_0_z,
                    self.flap_axis_1_x,
                    self.flap_axis_1_y, self.flap_axis_1_z,
@@ -2812,11 +2782,6 @@ class IrregularFlapWaveMotionTimeline(QtGui.QWidget):
 
         self.depth_label = QtGui.QLabel(__("Depth (m): "))
         self.depth_input = QtGui.QLineEdit()
-
-        self.fixed_depth_label = QtGui.QLabel(__("Fixed depth (m): "))
-        self.fixed_depth_input = QtGui.QLineEdit()
-        self.fixed_depth_input.setEnabled(False)
-        self.fixed_depth_units_label = QtGui.QLabel()
 
         self.flap_axis_0_label = QtGui.QLabel(
             __("Flap axis 0 (X, Y, Z): "))
@@ -2904,8 +2869,7 @@ class IrregularFlapWaveMotionTimeline(QtGui.QWidget):
 
         self.first_row_layout = QtGui.QHBoxLayout()
         [self.first_row_layout.addWidget(x) for x in [self.wave_order_label, self.wave_order_selector,
-                                                      self.depth_label, self.depth_input,
-                                                      self.fixed_depth_label, self.fixed_depth_input]]
+                                                      self.depth_label, self.depth_input]]
 
         self.second_row_layout = QtGui.QHBoxLayout()
         [self.second_row_layout.addWidget(x) for x in [self.flap_axis_0_label,
@@ -2984,7 +2948,6 @@ class IrregularFlapWaveMotionTimeline(QtGui.QWidget):
         self.wave_order_selector.setCurrentIndex(
             int(irreg_wave_gen.wave_order) - 1)
         self.depth_input.setText(str(irreg_wave_gen.depth))
-        self.fixed_depth_input.setText(str(irreg_wave_gen.fixed_depth))
         self.flap_axis_0_x.setText(str(irreg_wave_gen.flapaxis0[0]))
         self.flap_axis_0_y.setText(str(irreg_wave_gen.flapaxis0[1]))
         self.flap_axis_0_z.setText(str(irreg_wave_gen.flapaxis0[2]))
@@ -3029,7 +2992,7 @@ class IrregularFlapWaveMotionTimeline(QtGui.QWidget):
 
         [x.textChanged.connect(self.on_change) for x in [self.peak_coef_input, self.waves_input, self.randomseed_input,
                                                          self.serieini_input, self.ramptime_input, self.duration_input,
-                                                         self.depth_input, self.fixed_depth_input, self.flap_axis_0_x,
+                                                         self.depth_input, self.flap_axis_0_x,
                                                          self.flap_axis_0_y, self.flap_axis_0_z,
                                                          self.flap_axis_1_x,
                                                          self.flap_axis_1_y, self.flap_axis_1_z,
@@ -3054,8 +3017,6 @@ class IrregularFlapWaveMotionTimeline(QtGui.QWidget):
         return IrregularFlapWaveGen(parent_movement=self.parent_movement,
                                     wave_order=self.wave_order_selector.currentIndex() + 1, start=0,
                                     duration=float(self.duration_input.text()), depth=float(self.depth_input.text()),
-                                    fixed_depth=float(
-                                        self.fixed_depth_input.text()),
                                     flapaxis0=[float(self.flap_axis_0_x.text()),
                                                float(
                                                    self.flap_axis_0_y.text()),
@@ -3111,8 +3072,7 @@ class IrregularFlapWaveMotionTimeline(QtGui.QWidget):
         [x.setText("0")
          if len(x.text()) is 0
          else x.setText(x.text().replace(",", "."))
-         for x in [self.duration_input, self.depth_input,
-                   self.fixed_depth_input, self.flap_axis_0_x,
+         for x in [self.duration_input, self.depth_input, self.flap_axis_0_x,
                    self.flap_axis_0_y, self.flap_axis_0_z,
                    self.flap_axis_1_x,
                    self.flap_axis_1_y, self.flap_axis_1_z,
@@ -5001,6 +4961,21 @@ class FocusableLineEdit(QtGui.QLineEdit):
         self.focus.emit(self.help_text)
 
 
+class FocusableComboBox(QtGui.QComboBox):
+    focus = QtCore.Signal(str)
+    help_text = ""
+
+    def __init__(self):
+        super(FocusableComboBox, self).__init__()
+
+    def setHelpText(self, help_text):
+        self.help_text = help_text
+
+    def focusInEvent(self, *args, **kwargs):
+        QtGui.QComboBox.focusInEvent(self, *args, **kwargs).__init__()
+        self.focus.emit(self.help_text)
+
+
 class ConstantsDialog(QtGui.QDialog):
 
     def __init__(self, data):
@@ -5040,7 +5015,6 @@ class ConstantsDialog(QtGui.QDialog):
         # Gravity
         self.gravity_layout = QtGui.QHBoxLayout()
         self.gravity_label = HoverableLabel("Gravity [X, Y, Z]: ")
-        self.gravity_label.setToolTip(utils.__(constants.GRAVITY))
 
         self.gravityx_input = QtGui.QLineEdit()
         self.gravityx_input = FocusableLineEdit()
@@ -5087,7 +5061,6 @@ class ConstantsDialog(QtGui.QDialog):
         # Reference density of the fluid: layout and components
         self.rhop0_layout = QtGui.QHBoxLayout()
         self.rhop0_label = QtGui.QLabel("Fluid reference density: ")
-        self.rhop0_label.setToolTip(utils.__(constants.RHOP0))
 
         self.rhop0_input = QtGui.QLineEdit()
         self.rhop0_input = FocusableLineEdit()
@@ -5120,7 +5093,6 @@ class ConstantsDialog(QtGui.QDialog):
 
         self.hswl_layout = QtGui.QHBoxLayout()
         self.hswl_label = QtGui.QLabel("HSWL: ")
-        self.hswl_label.setToolTip(utils.__(constants.HSWL))
         self.hswl_input = QtGui.QLineEdit()
         self.hswl_input = FocusableLineEdit()
         self.hswl_input.setHelpText(utils.__(constants.HELP_HSWL))
@@ -5143,7 +5115,6 @@ class ConstantsDialog(QtGui.QDialog):
         # gamma: layout and components
         self.gamma_layout = QtGui.QHBoxLayout()
         self.gamma_label = QtGui.QLabel("Gamma: ")
-        self.gamma_label.setToolTip(utils.__(constants.GAMMA))
         self.gamma_input = QtGui.QLineEdit()
         self.gamma_input = FocusableLineEdit()
         self.gamma_input.setHelpText(utils.__(constants.HELP_GAMMA))
@@ -5173,7 +5144,6 @@ class ConstantsDialog(QtGui.QDialog):
 
         self.speedsystem_layout = QtGui.QHBoxLayout()
         self.speedsystem_label = QtGui.QLabel("Speedsystem: ")
-        self.speedsystem_label.setToolTip(utils.__(constants.SPEEDSYSTEM))
         self.speedsystem_input = QtGui.QLineEdit()
         self.speedsystem_input = FocusableLineEdit()
         self.speedsystem_input.setHelpText(utils.__(constants.HELP_SPEEDSYSTEM))
@@ -5196,7 +5166,6 @@ class ConstantsDialog(QtGui.QDialog):
         # coefsound: layout and components
         self.coefsound_layout = QtGui.QHBoxLayout()
         self.coefsound_label = QtGui.QLabel("Coefsound: ")
-        self.coefsound_label.setToolTip(utils.__(constants.COEFSOUND))
         self.coefsound_input = QtGui.QLineEdit()
         self.coefsound_input = FocusableLineEdit()
         self.coefsound_input.setHelpText(utils.__(constants.HELP_COEFSOUND))
@@ -5226,7 +5195,6 @@ class ConstantsDialog(QtGui.QDialog):
 
         self.speedsound_layout = QtGui.QHBoxLayout()
         self.speedsound_label = QtGui.QLabel("Speedsound: ")
-        self.speedsound_label.setToolTip(utils.__(constants.SPEEDSOUND))
         self.speedsound_input = QtGui.QLineEdit()
         self.speedsound_input = FocusableLineEdit()
         self.speedsound_input.setHelpText(utils.__(constants.HELP_SPEEDSOUND))
@@ -5249,7 +5217,6 @@ class ConstantsDialog(QtGui.QDialog):
         # coefh: layout and components
         self.coefh_layout = QtGui.QHBoxLayout()
         self.coefh_label = QtGui.QLabel("CoefH: ")
-        self.coefh_label.setToolTip(utils.__(constants.COEFH))
         self.coefh_input = QtGui.QLineEdit()
         self.coefh_input = FocusableLineEdit()
         self.coefh_input.setHelpText(utils.__(constants.HELP_COEFH))
@@ -5269,7 +5236,6 @@ class ConstantsDialog(QtGui.QDialog):
         # cflnumber: layout and components
         self.cflnumber_layout = QtGui.QHBoxLayout()
         self.cflnumber_label = QtGui.QLabel("cflnumber: ")
-        self.cflnumber_label.setToolTip(utils.__(constants.CFLNUMBER))
         self.cflnumber_input = QtGui.QLineEdit()
         self.cflnumber_input = FocusableLineEdit()
         self.cflnumber_input.setHelpText(utils.__(constants.HELP_CFLNUMBER))
@@ -5365,6 +5331,8 @@ class ConstantsDialog(QtGui.QDialog):
         self.cw_button_layout.addWidget(self.cancel_button)
 
         # START Main layout definition and composition.
+        self.cw_main_layout_scroll = QtGui.QScrollArea()
+        self.cw_main_layout_scroll_widget = QtGui.QWidget()
         self.cw_main_layout = QtGui.QVBoxLayout()
 
         # Lattice was removed on 0.3Beta - 1 of June
@@ -5389,13 +5357,16 @@ class ConstantsDialog(QtGui.QDialog):
 
         self.cw_main_layout.addStretch(1)
 
-        self.cw_groupbox = QtGui.QGroupBox("Case constants")
-        self.cw_groupbox.setLayout(self.cw_main_layout)
+        self.cw_main_layout_scroll_widget.setLayout(self.cw_main_layout)
+        self.cw_main_layout_scroll.setWidget(self.cw_main_layout_scroll_widget)
+        self.cw_main_layout_scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
         self.constants_window_layout = QtGui.QVBoxLayout()
-        self.constants_window_layout.addWidget(self.cw_groupbox)
+        self.constants_window_layout.addWidget(self.cw_main_layout_scroll)
         self.constants_window_layout.addLayout(self.cw_helpText_layout)
         self.constants_window_layout.addLayout(self.cw_button_layout)
         self.setLayout(self.constants_window_layout)
+        self.setMaximumHeight(550)
         # END Main layout definition and composition.
 
     # Controls if user selected auto HSWL or not enabling/disablen HSWL custom
@@ -5489,11 +5460,13 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Precision in particle interaction
         self.posdouble_layout = QtGui.QHBoxLayout()
         self.posdouble_label = QtGui.QLabel("Precision in particle interaction: ")
-        self.posdouble_label.setToolTip(utils.__(constants.POSDOUBLE))
-        self.posdouble_input = QtGui.QComboBox()
+        self.posdouble_input = FocusableComboBox()
         self.posdouble_input.insertItems(0,
                                     ['Simple', 'Double', 'Uses and saves double'])
         self.posdouble_input.setCurrentIndex(int(self.data['posdouble']))
+        self.posdouble_input.setHelpText(utils.__(constants.HELP_POSDOUBLE))
+
+        self.posdouble_input.focus.connect(self.on_help_focus)
 
         self.posdouble_layout.addWidget(self.posdouble_label)
         self.posdouble_layout.addWidget(self.posdouble_input)
@@ -5501,10 +5474,13 @@ class ExecutionParametersDialog(QtGui.QDialog):
 
         self.stepalgorithm_layout = QtGui.QHBoxLayout()
         self.stepalgorithm_label = QtGui.QLabel("Step Algorithm: ")
-        self.stepalgorithm_label.setToolTip(utils.__(constants.STEPALGORITHM))
-        self.stepalgorithm_input = QtGui.QComboBox()
+        self.stepalgorithm_input = FocusableComboBox()
         self.stepalgorithm_input.insertItems(0, ['Verlet', 'Symplectic'])
         self.stepalgorithm_input.setCurrentIndex(int(self.data['stepalgorithm']) - 1)
+        self.stepalgorithm_input.setHelpText(utils.__(constants.HELP_STEPALGORITHM))
+
+        self.stepalgorithm_input.focus.connect(self.on_help_focus)
+
         self.stepalgorithm_input.currentIndexChanged.connect(self.on_step_change)
 
         self.stepalgorithm_layout.addWidget(self.stepalgorithm_label)
@@ -5514,7 +5490,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Verlet steps
         self.verletsteps_layout = QtGui.QHBoxLayout()
         self.verletsteps_label = QtGui.QLabel("Verlet Steps: ")
-        self.verletsteps_label.setToolTip(utils.__(constants.VERLETSTEPS))
         self.verletsteps_input = QtGui.QLineEdit()
         self.verletsteps_input = FocusableLineEdit()
         self.verletsteps_input.setHelpText(utils.__(constants.HELP_VERLETSTEPS))
@@ -5535,10 +5510,12 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Kernel
         self.kernel_layout = QtGui.QHBoxLayout()
         self.kernel_label = QtGui.QLabel("Interaction kernel: ")
-        self.kernel_label.setToolTip(utils.__(constants.KERNEL))
-        self.kernel_input = QtGui.QComboBox()
+        self.kernel_input = FocusableComboBox()
         self.kernel_input.insertItems(0, ['Cubic spline', 'Wendland'])
+        self.kernel_input.setHelpText(utils.__(constants.HELP_KERNEL))
         self.kernel_input.setCurrentIndex(int(self.data['kernel']) - 1)
+
+        self.kernel_input.focus.connect(self.on_help_focus)
 
         self.kernel_layout.addWidget(self.kernel_label)
         self.kernel_layout.addWidget(self.kernel_input)
@@ -5547,10 +5524,12 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Viscosity formulation
         self.viscotreatment_layout = QtGui.QHBoxLayout()
         self.viscotreatment_label = QtGui.QLabel("Viscosity Formulation: ")
-        self.viscotreatment_label.setToolTip(utils.__(constants.VISCOTREATMENT))
-        self.viscotreatment_input = QtGui.QComboBox()
+        self.viscotreatment_input = FocusableComboBox()
         self.viscotreatment_input.insertItems(0, ['Artificial', 'Laminar + SPS'])
+        self.viscotreatment_input.setHelpText(utils.__(constants.HELP_VISCOTREATMENT))
         self.viscotreatment_input.setCurrentIndex(int(self.data['viscotreatment']) - 1)
+
+        self.viscotreatment_input.focus.connect(self.on_help_focus)
 
         self.viscotreatment_layout.addWidget(self.viscotreatment_label)
         self.viscotreatment_layout.addWidget(self.viscotreatment_input)
@@ -5559,7 +5538,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Viscosity value
         self.visco_layout = QtGui.QHBoxLayout()
         self.visco_label = QtGui.QLabel("Viscosity value: ")
-        self.visco_label.setToolTip(utils.__(constants.VISCO))
         self.visco_input = FocusableLineEdit()
         self.visco_input.setHelpText(utils.__(constants.HELP_VISCO))
         self.visco_input.setMaxLength(10)
@@ -5579,7 +5557,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Viscosity with boundary
         self.viscoboundfactor_layout = QtGui.QHBoxLayout()
         self.viscoboundfactor_label = QtGui.QLabel("Viscosity factor with boundary: ")
-        self.viscoboundfactor_label.setToolTip(utils.__(constants.VISCOBOUNDFACTOR))
         self.viscoboundfactor_input = FocusableLineEdit()
 
         self.viscoboundfactor_input.setHelpText(utils.__(constants.HELP_VISCOBOUNDFACROT))
@@ -5607,7 +5584,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # DeltaSPH value
         self.deltasph_layout = QtGui.QHBoxLayout()
         self.deltasph_label = QtGui.QLabel("DeltaSPH value: ")
-        self.deltasph_label.setToolTip(utils.__(constants.DELTASPH))
         self.deltasph_input = FocusableLineEdit()
         self.deltasph_input.setHelpText(utils.__(constants.HELP_DELTASPH))
         self.deltasph_input.setMaxLength(10)
@@ -5625,10 +5601,13 @@ class ExecutionParametersDialog(QtGui.QDialog):
 
         self.shifting_layout = QtGui.QHBoxLayout()
         self.shifting_label = QtGui.QLabel("Shifting mode: ")
-        self.shifting_label.setToolTip(utils.__(constants.SHIFTING))
-        self.shifting_input = QtGui.QComboBox()
+        self.shifting_input = FocusableComboBox()
         self.shifting_input.insertItems(
             0, ['None', 'Ignore bound', 'Ignore fixed', 'Full'])
+        self.shifting_input.setHelpText(utils.__(constants.HELP_SHIFTING))
+
+        self.shifting_input.focus.connect(self.on_help_focus)
+
         self.shifting_input.setCurrentIndex(int(self.data['shifting']))
         self.shifting_input.currentIndexChanged.connect(self.on_shifting_change)
 
@@ -5639,7 +5618,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Coefficient for shifting
         self.shiftcoef_layout = QtGui.QHBoxLayout()
         self.shiftcoef_label = QtGui.QLabel("Coefficient for shifting: ")
-        self.shiftcoef_label.setToolTip(utils.__(constants.SHIFTINGCOEF))
         self.shiftcoef_input = FocusableLineEdit()
         self.shiftcoef_input.setHelpText(utils.__(constants.HELP_SHIFTINGCOEF))
         self.shiftcoef_input.setMaxLength(10)
@@ -5653,7 +5631,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Free surface detection threshold
         self.shifttfs_layout = QtGui.QHBoxLayout()
         self.shifttfs_label = QtGui.QLabel("Free surface detection threshold: ")
-        self.shifttfs_label.setToolTip(utils.__(constants.SHIFTINGTFS))
         self.shifttfs_input = FocusableLineEdit()
         self.shifttfs_input.setHelpText(utils.__(constants.HELP_SHIFTINGTFS))
         self.shifttfs_input.setMaxLength(10)
@@ -5670,10 +5647,12 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Rigid algorithm
         self.rigidalgorithm_layout = QtGui.QHBoxLayout()
         self.rigidalgorithm_label = QtGui.QLabel("Solid-solid interaction: ")
-        self.rigidalgorithm_label.setToolTip(utils.__(constants.RIGIDALGORITHM))
-        self.rigidalgorithm_input = QtGui.QComboBox()
+        self.rigidalgorithm_input = FocusableComboBox()
         self.rigidalgorithm_input.insertItems(0, ['SPH', 'DEM'])
+        self.rigidalgorithm_input.setHelpText(utils.__(constants.HELP_RIGIDALGORITHM))
         self.rigidalgorithm_input.setCurrentIndex(int(self.data['rigidalgorithm']) - 1)
+
+        self.rigidalgorithm_input.focus.connect(self.on_help_focus)
 
         self.rigidalgorithm_layout.addWidget(self.rigidalgorithm_label)
         self.rigidalgorithm_layout.addWidget(self.rigidalgorithm_input)
@@ -5682,7 +5661,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Sim start freeze time
         self.ftpause_layout = QtGui.QHBoxLayout()
         self.ftpause_label = QtGui.QLabel("Floating freeze time: ")
-        self.ftpause_label.setToolTip(utils.__(constants.FTPAUSE))
         self.ftpause_input = FocusableLineEdit()
         self.ftpause_input.setHelpText(utils.__(constants.HELP_FTPAUSE))
         self.ftpause_input.setMaxLength(10)
@@ -5698,7 +5676,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Coefficient to calculate DT
         self.coefdtmin_layout = QtGui.QHBoxLayout()
         self.coefdtmin_label = QtGui.QLabel("Coefficient for minimum time step: ")
-        self.coefdtmin_label.setToolTip(utils.__(constants.COEFDTMIN))
         self.coefdtmin_input = FocusableLineEdit()
         self.coefdtmin_input.setHelpText(utils.__(constants.HELP_COEFDTMIN))
         self.coefdtmin_input.setMaxLength(10)
@@ -5721,7 +5698,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.dtiniauto_layout.addWidget(self.dtiniauto_chk)
         self.dtini_layout = QtGui.QHBoxLayout()
         self.dtini_label = QtGui.QLabel("Initial time step: ")
-        self.dtini_label.setToolTip(utils.__(constants.DTINI))
         self.dtini_input = FocusableLineEdit()
         self.dtini_input.setHelpText(utils.__(constants.HELP_DTINI))
         self.dtini_input.setMaxLength(10)
@@ -5747,7 +5723,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.dtminauto_layout.addWidget(self.dtminauto_chk)
         self.dtmin_layout = QtGui.QHBoxLayout()
         self.dtmin_label = QtGui.QLabel("Minimium time step: ")
-        self.dtmin_label.setToolTip(utils.__(constants.DTMIN))
         self.dtmin_input = FocusableLineEdit()
         self.dtmin_input.setHelpText(utils.__(constants.HELP_DTMIN))
         self.dtmin_input.setMaxLength(10)
@@ -5787,7 +5762,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Time of simulation
         self.timemax_layout = QtGui.QHBoxLayout()
         self.timemax_label = QtGui.QLabel("Time of simulation: ")
-        self.timemax_label.setToolTip(utils.__(constants.TIMEMAX))
         self.timemax_input = FocusableLineEdit()
         self.timemax_input.setHelpText(utils.__(constants.HELP_TIMEMAX))
         self.timemax_input.setMaxLength(10)
@@ -5803,7 +5777,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Time out data
         self.timeout_layout = QtGui.QHBoxLayout()
         self.timeout_label = QtGui.QLabel("Time out data: ")
-        self.timeout_label.setToolTip(utils.__(constants.TIMEOUT))
         self.timeout_input = FocusableLineEdit()
         self.timeout_input.setHelpText(utils.__(constants.HELP_TIMEOUT))
         self.timeout_input.setMaxLength(10)
@@ -5819,7 +5792,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Increase of Z+
         self.incz_layout = QtGui.QHBoxLayout()
         self.incz_label = QtGui.QLabel("Increase of Z+ (%): ")
-        self.incz_label.setToolTip(utils.__(constants.INCZ))
         self.incz_input = FocusableLineEdit()
         self.incz_input.setHelpText(utils.__(constants.HELP_INCZ))
         self.incz_input.setMaxLength(10)
@@ -5833,7 +5805,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Max parts out allowed
         self.partsoutmax_layout = QtGui.QHBoxLayout()
         self.partsoutmax_label = QtGui.QLabel("Max parts out allowed (%): ")
-        self.partsoutmax_label.setToolTip(utils.__(constants.PARTSOUTMAX))
         self.partsoutmax_input = FocusableLineEdit()
         self.partsoutmax_input.setHelpText(utils.__(constants.HELP_PARTSOUTMAX))
         self.partsoutmax_input.setMaxLength(10)
@@ -5847,7 +5818,6 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Minimum rhop valid
         self.rhopoutmin_layout = QtGui.QHBoxLayout()
         self.rhopoutmin_label = QtGui.QLabel("Minimum rhop valid: ")
-        self.rhopoutmin_label.setToolTip(utils.__(constants.RHOPOUTMIN))
         self.rhopoutmin_input = FocusableLineEdit()
         self.rhopoutmin_input.setHelpText(utils.__(constants.HELP_RHOPOUTMIN))
         self.rhopoutmin_input.setMaxLength(10)
@@ -5864,9 +5834,8 @@ class ExecutionParametersDialog(QtGui.QDialog):
         # Maximum rhop valid
         self.rhopoutmax_layout = QtGui.QHBoxLayout()
         self.rhopoutmax_label = QtGui.QLabel("Maximum rhop valid: ")
-        self.rhopoutmax_label.setToolTip(utils.__(constants.RHOPOUTMAX))
         self.rhopoutmax_input = FocusableLineEdit()
-        self.rhopoutmin_input.setHelpText(utils.__(constants.HELP_RHOPOUTMAX))
+        self.rhopoutmax_input.setHelpText(utils.__(constants.HELP_RHOPOUTMAX))
         self.rhopoutmax_input.setMaxLength(10)
 
         self.rhopoutmax_input.focus.connect(self.on_help_focus)
@@ -5887,18 +5856,24 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.domainfixed_z_layout = QtGui.QHBoxLayout()
 
         self.domainfixed_xmin_label = QtGui.QLabel("X Min")
+        self.domainfixed_xmin_label.setToolTip(utils.__(constants.XMIN))
         self.domainfixed_xmin_input = QtGui.QLineEdit("0")
         self.domainfixed_xmax_label = QtGui.QLabel("X Max")
+        self.domainfixed_xmax_label.setToolTip(utils.__(constants.XMAX))
         self.domainfixed_xmax_input = QtGui.QLineEdit("0")
 
         self.domainfixed_ymin_label = QtGui.QLabel("Y Min")
+        self.domainfixed_ymin_label.setToolTip(utils.__(constants.YMIN))
         self.domainfixed_ymin_input = QtGui.QLineEdit("0")
         self.domainfixed_ymax_label = QtGui.QLabel("Y Max")
+        self.domainfixed_ymax_label.setToolTip(utils.__(constants.YMAX))
         self.domainfixed_ymax_input = QtGui.QLineEdit("0")
 
         self.domainfixed_zmin_label = QtGui.QLabel("Z Min")
+        self.domainfixed_zmin_label.setToolTip(utils.__(constants.ZMIN))
         self.domainfixed_zmin_input = QtGui.QLineEdit("0")
         self.domainfixed_zmax_label = QtGui.QLabel("Z Max")
+        self.domainfixed_zmax_label.setToolTip(utils.__(constants.ZMAX))
         self.domainfixed_zmax_input = QtGui.QLineEdit("0")
 
         self.domainfixed_x_layout.addWidget(self.domainfixed_xmin_label)
@@ -5938,12 +5913,15 @@ class ExecutionParametersDialog(QtGui.QDialog):
 
         self.period_x_layout = QtGui.QVBoxLayout()
         self.period_x_chk = QtGui.QCheckBox("X periodicity")
+        self.period_x_chk.setToolTip(utils.__(constants.PERIODX))
         self.period_x_inc_layout = QtGui.QHBoxLayout()
         self.period_x_inc_x_label = QtGui.QLabel("X Increment")
         self.period_x_inc_x_input = QtGui.QLineEdit("0")
         self.period_x_inc_y_label = QtGui.QLabel("Y Increment")
+        self.period_x_inc_y_label.setToolTip(utils.__(constants.YINCEMENTX))
         self.period_x_inc_y_input = QtGui.QLineEdit("0")
         self.period_x_inc_z_label = QtGui.QLabel("Z Increment")
+        self.period_x_inc_z_label.setToolTip(utils.__(constants.ZINCREMENTX))
         self.period_x_inc_z_input = QtGui.QLineEdit("0")
         self.period_x_inc_layout.addWidget(self.period_x_inc_x_label)
         self.period_x_inc_layout.addWidget(self.period_x_inc_x_input)
@@ -5968,12 +5946,15 @@ class ExecutionParametersDialog(QtGui.QDialog):
 
         self.period_y_layout = QtGui.QVBoxLayout()
         self.period_y_chk = QtGui.QCheckBox("Y periodicity")
+        self.period_y_chk.setToolTip(utils.__(constants.PERIODY))
         self.period_y_inc_layout = QtGui.QHBoxLayout()
         self.period_y_inc_x_label = QtGui.QLabel("X Increment")
+        self.period_y_inc_x_label.setToolTip(utils.__(constants.XINCREMENTY))
         self.period_y_inc_x_input = QtGui.QLineEdit("0")
         self.period_y_inc_y_label = QtGui.QLabel("Y Increment")
         self.period_y_inc_y_input = QtGui.QLineEdit("0")
         self.period_y_inc_z_label = QtGui.QLabel("Z Increment")
+        self.period_y_inc_z_label.setToolTip(utils.__(constants.XINCREMENTY))
         self.period_y_inc_z_input = QtGui.QLineEdit("0")
         self.period_y_inc_layout.addWidget(self.period_y_inc_x_label)
         self.period_y_inc_layout.addWidget(self.period_y_inc_x_input)
@@ -5998,10 +5979,13 @@ class ExecutionParametersDialog(QtGui.QDialog):
 
         self.period_z_layout = QtGui.QVBoxLayout()
         self.period_z_chk = QtGui.QCheckBox("Z periodicity")
+        self.period_z_chk.setToolTip(utils.__(constants.PERIODZ))
         self.period_z_inc_layout = QtGui.QHBoxLayout()
         self.period_z_inc_x_label = QtGui.QLabel("X Increment")
+        self.period_z_inc_x_label.setToolTip(utils.__(constants.XINCREMENTZ))
         self.period_z_inc_x_input = QtGui.QLineEdit("0")
         self.period_z_inc_y_label = QtGui.QLabel("Y Increment")
+        self.period_z_inc_y_label.setToolTip(utils.__(constants.YINCEMENTZ))
         self.period_z_inc_y_input = QtGui.QLineEdit("0")
         self.period_z_inc_z_label = QtGui.QLabel("Z Increment")
         self.period_z_inc_z_input = QtGui.QLineEdit("0")

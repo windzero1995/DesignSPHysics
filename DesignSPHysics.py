@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.7
 # -*- coding: utf-8 -*-
 """
 Initializes a complete interface with DualSPHysics suite related operations.
@@ -21,13 +21,12 @@ import traceback
 import subprocess
 import shutil
 import uuid
-from PySide import QtGui, QtCore
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+from PySide import QtGui, QtCore
 
 # Fix FreeCAD not searching in the user-set macro folder.
 try:
+    from ds_modules import properties
     from ds_modules.properties import *
     from ds_modules import utils, guiutils, xmlimporter, dsphwidgets
     from ds_modules.utils import __
@@ -37,7 +36,7 @@ except:
     from ds_modules import utils, guiutils, xmlimporter, dsphwidgets
     from ds_modules.utils import __
 
-# Copyright (C) 2017 - Andrés Vieira (anvieiravazquez@gmail.com)
+# Copyright (C) 2019
 # EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
 # EPHYTECH Environmental Physics Technologies
 #
@@ -58,12 +57,12 @@ except:
 
 __author__ = "Andrés Vieira"
 __copyright__ = "Copyright 2016-2017, DualSHPysics Team"
-__credits__ = ["Andrés Vieira",
+__credits__ = ["Andrés Vieira", "Lorena Docasar",
                "Alejandro Jacobo Cabrera Crespo", "Orlando García Feal"]
 __license__ = "GPL"
 __version__ = utils.VERSION
-__maintainer__ = "Andrés Vieira"
-__email__ = "anvieiravazquez@gmail.com"
+__maintainer__ = "Lorena Docasar"
+__email__ = "docasarlorena@gmail.com"
 __status__ = "Development"
 
 # Print license at macro start
@@ -84,8 +83,6 @@ if not is_compatible:
         __("This FreeCAD version is not compatible. Please update FreeCAD to version 0.17 or higher.")
     )
 
-# Set QT to UTF-8 encoding
-QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName('UTF-8'))
 
 # Main data structure
 # TODO: Big Change: Data structures should be an instance of a class like CaseData() and TempCaseData(), not a dict()
@@ -115,7 +112,7 @@ if utils.document_count() > 0:
         quit()
 
 # If the script is executed even when a previous DSPH Dock is created it makes sure that it's deleted before.
-previous_dock = fc_main_window.findChild(QtGui.QDockWidget, __("DSPH Widget"))
+previous_dock = fc_main_window.findChild(QtGui.QDockWidget, utils.__("DSPH Widget"))
 if previous_dock:
     previous_dock.setParent(None)
     previous_dock = None
@@ -143,7 +140,6 @@ constants_button.setToolTip(__("Use this button to define case constants,\nsuch 
 # Opens constant definition window on button click
 def on_constants_button_pressed():
     constants_window = dsphwidgets.ConstantsDialog(data)
-
     # Constant definition window behaviour and general composing
     constants_window.resize(600, 400)
     constants_window.exec_()
@@ -166,15 +162,12 @@ setup_button.clicked.connect(lambda: guiutils.def_setup_window(data))
 execparams_button = QtGui.QPushButton(__("Execution\nParameters"))
 execparams_button.setToolTip(__("Change execution parameters, such as\ntime of simulation, viscosity, etc."))
 
-
 # Opens execution parameters window on button click
 def on_execparams_button_presed():
     execparams_window = dsphwidgets.ExecutionParametersDialog(data)
-
     # Execution parameters window behaviour and general composing
     execparams_window.resize(800, 600)
     execparams_window.exec_()
-
 
 execparams_button.clicked.connect(on_execparams_button_presed)
 widget_state_elements['execparams_button'] = execparams_button
@@ -215,7 +208,6 @@ ccfilebuttons_layout = QtGui.QHBoxLayout()
 ccsecondrow_layout = QtGui.QHBoxLayout()
 ccthirdrow_layout = QtGui.QHBoxLayout()
 ccfourthrow_layout = QtGui.QHBoxLayout()
-ccfivethrow_layout = QtGui.QHBoxLayout()
 casecontrols_label = QtGui.QLabel("<b>{}</b>".format(__("Pre-processing")))
 
 # New Case button
@@ -223,7 +215,7 @@ casecontrols_bt_newdoc = QtGui.QToolButton()
 casecontrols_bt_newdoc.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
 casecontrols_bt_newdoc.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
 casecontrols_bt_newdoc.setText("  {}".format(__("New\n  Case")))
-casecontrols_bt_newdoc.setToolTip(__("Creates a new case. \nThe opened documents will be closed."))
+casecontrols_bt_newdoc.setToolTip(utils.__("Creates a new case. \nThe opened documents will be closed."))
 casecontrols_bt_newdoc.setIcon(guiutils.get_icon("new.png"))
 casecontrols_bt_newdoc.setIconSize(QtCore.QSize(28, 28))
 casecontrols_menu_newdoc = QtGui.QMenu()
@@ -261,12 +253,12 @@ casecontrols_bt_addfillbox.setToolTip(__("Adds a FillBox. A FillBox is able to f
 casecontrols_bt_addfillbox.setEnabled(False)
 widget_state_elements['casecontrols_bt_addfillbox'] = casecontrols_bt_addfillbox
 
-# Import STL button
-casecontrols_bt_addstl = QtGui.QPushButton("Import STL")
-casecontrols_bt_addstl.setToolTip(__("Imports a STL with postprocessing. "
+# Import GEO button
+casecontrols_bt_addgeo = QtGui.QPushButton("Import GEO")
+casecontrols_bt_addgeo.setToolTip(__("Imports a GEO object with postprocessing. "
                                      "This way you can set the scale of the imported object."))
-casecontrols_bt_addstl.setEnabled(False)
-widget_state_elements['casecontrols_bt_addstl'] = casecontrols_bt_addstl
+casecontrols_bt_addgeo.setEnabled(False)
+widget_state_elements['casecontrols_bt_addgeo'] = casecontrols_bt_addgeo
 
 # Import XML button
 casecontrols_bt_importxml = QtGui.QPushButton(__("Import XML"))
@@ -349,7 +341,6 @@ def on_new_from_freecad_document(prompt=True):
 def on_save_case(save_as=None):
     """ Defines what happens when save case button is clicked.
     Saves a freecad scene definition, and a dump of dsph data for the case."""
-
     # Watch if save path is available.  Prompt the user if not.
     if (data['project_path'] == "" and data['project_name'] == "") or save_as:
         # noinspection PyArgumentList
@@ -371,10 +362,10 @@ def on_save_case(save_as=None):
             os.makedirs("{}/{}_out".format(save_name, project_name))
 
         # Copy files from movements and change its paths to be inside the project.
-        for key, value in data["motion_mks"].iteritems():
+        for key, value in data["motion_mks"].items():
             for movement in value:
-                if isinstance(movement, SpecialMovement):
-                    if isinstance(movement.generator, FileGen) or isinstance(movement.generator, RotationFileGen):
+                if isinstance(movement, properties.SpecialMovement):
+                    if isinstance(movement.generator, properties.FileGen) or isinstance(movement.generator, properties.RotationFileGen):
                         filename = movement.generator.filename
                         utils.debug("Copying {} to {}".format(filename, save_name))
 
@@ -433,7 +424,7 @@ def on_save_case(save_as=None):
                 pass
 
         # Copy files from pistons and change paths to be inside the project folder.
-        for key, piston in data["mlayerpistons"].iteritems():
+        for key, piston in data["mlayerpistons"].items():
             if isinstance(piston, MLPiston1D):
                 filename = piston.filevelx
                 utils.debug("Copying {} to {}".format(filename, save_name + "/" + project_name + "_out"))
@@ -582,18 +573,20 @@ def on_save_with_gencase():
     data['gencase_done'] = False
     if data['gencase_path'] != "":
         # Tries to spawn a process with GenCase to generate the case
+
         process = QtCore.QProcess(fc_main_window)
         gencase_full_path = os.getcwd() + "/" + data['gencase_path']
-        process.setWorkingDirectory(data['project_path'])
         process.start(gencase_full_path, [
             data['project_path'] + '/' + data['project_name'] + '_Def', data['project_path'] +
             '/' + data['project_name'] + '_out/' + data['project_name'],
             '-save:+all'
         ])
-        process.waitForFinished()
-        output = str(process.readAllStandardOutput())
-        error_in_gen_case = False
 
+        process.waitForFinished()
+
+        output = str(process.readAllStandardOutput())
+
+        error_in_gen_case = False
         # If GenCase was successful, check for internal errors
         # This is done because a "clean" exit (return 0) of GenCase does not mean that all went correct.
         if str(process.exitCode()) == "0":
@@ -610,7 +603,6 @@ def on_save_with_gencase():
                                      "and it could take a lot of time to simulate.").format(str(total_particles)))
                 data['gencase_done'] = True
                 guiutils.widget_state_config(widget_state_elements, "gencase done")
-
                 data["last_number_particles"] = int(total_particles)
                 guiutils.gencase_completed_dialog(particle_count=total_particles,
                                                   detail_text=output.split("================================")[1],
@@ -821,121 +813,134 @@ def on_add_damping_zone():
     # Save damping in the main data structure.
     data["damping"][damping_group.Name] = Damping()
     # Opens damping configuration window to tweak the added damping zone.
-    guiutils.damping_config_window(data, damping_group.Name)
+    dsphwidgets.DampingConfigDialog(data, damping_group.Name)
+
+
+def on_add_inlet():
+    # Opens Inlet/Outlet configuration window to configurate the inlet/outlet options.
+    dsphwidgets.InletConfigDialog(data)
+
+
+def on_add_chrono():
+    # Opens chrono configuration window to configurate the chrono options.
+    dsphwidgets.ChronoConfigDialog(data)
 
 
 def on_add_stl():
     """ Add STL file. Opens a file opener and allows
-    the user to set parameters for the import process"""
+    the user to set parameters for the import process """
 
     # TODO: Low priority: This Dialog should be implemented and designed as a class like AddSTLDialog(QtGui.QDialog)
     filedialog = QtGui.QFileDialog()
 
     # noinspection PyArgumentList
-    file_name, _ = filedialog.getOpenFileName(fc_main_window, __("Select STL to import"), QtCore.QDir.homePath(), "STL Files (*.stl)")
+    file_name, _ = filedialog.getOpenFileName(fc_main_window, __("Select GEO to import"), QtCore.QDir.homePath(),
+                                              "STL Files (*.stl);;PLY Files (*.ply);;VTK Files (*.vtk)")
 
     if len(file_name) <= 1:
         # User didn't select any files
         return
 
     # Defines import stl dialog
-    stl_dialog = QtGui.QDialog()
-    stl_dialog.setModal(True)
-    stl_dialog.setWindowTitle(__("Import STL"))
-    stl_dialog_layout = QtGui.QVBoxLayout()
-    stl_group = QtGui.QGroupBox(__("Import STL options"))
-    stl_group_layout = QtGui.QVBoxLayout()
+    geo_dialog = QtGui.QDialog()
+    geo_dialog.setModal(True)
+    geo_dialog.setWindowTitle(__("Import GEO"))
+    geo_dialog_layout = QtGui.QVBoxLayout()
+    geo_group = QtGui.QGroupBox(__("Import GEO options"))
+    geo_group_layout = QtGui.QVBoxLayout()
 
     # STL File selection
-    stl_file_layout = QtGui.QHBoxLayout()
-    stl_file_label = QtGui.QLabel(__("STL File: "))
-    stl_file_path = QtGui.QLineEdit()
-    stl_file_path.setText(file_name)
-    stl_file_browse = QtGui.QPushButton(__("Browse"))
-    [stl_file_layout.addWidget(x) for x in [stl_file_label, stl_file_path, stl_file_browse]]
+    geo_file_layout = QtGui.QHBoxLayout()
+    geo_file_label = QtGui.QLabel(__("GEO File: "))
+    geo_file_path = QtGui.QLineEdit()
+    geo_file_path.setText(file_name)
+    geo_file_browse = QtGui.QPushButton(__("Browse"))
+    [geo_file_layout.addWidget(x) for x in [geo_file_label, geo_file_path, geo_file_browse]]
     # END STL File selection
 
     # Scaling factor
-    stl_scaling_layout = QtGui.QHBoxLayout()
-    stl_scaling_label = QtGui.QLabel(__("Scaling factor: "))
-    stl_scaling_x_l = QtGui.QLabel("X: ")
-    stl_scaling_x_e = QtGui.QLineEdit("1")
-    stl_scaling_y_l = QtGui.QLabel("Y: ")
-    stl_scaling_y_e = QtGui.QLineEdit("1")
-    stl_scaling_z_l = QtGui.QLabel("Z: ")
-    stl_scaling_z_e = QtGui.QLineEdit("1")
-    [stl_scaling_layout.addWidget(x) for x in [
-        stl_scaling_label,
-        stl_scaling_x_l,
-        stl_scaling_x_e,
-        stl_scaling_y_l,
-        stl_scaling_y_e,
-        stl_scaling_z_l,
-        stl_scaling_z_e,
+    geo_scaling_layout = QtGui.QHBoxLayout()
+    geo_scaling_label = QtGui.QLabel(__("Scaling factor: "))
+    geo_scaling_x_l = QtGui.QLabel("X: ")
+    geo_scaling_x_e = QtGui.QLineEdit("1")
+    geo_scaling_y_l = QtGui.QLabel("Y: ")
+    geo_scaling_y_e = QtGui.QLineEdit("1")
+    geo_scaling_z_l = QtGui.QLabel("Z: ")
+    geo_scaling_z_e = QtGui.QLineEdit("1")
+    [geo_scaling_layout.addWidget(x) for x in [
+        geo_scaling_label,
+        geo_scaling_x_l,
+        geo_scaling_x_e,
+        geo_scaling_y_l,
+        geo_scaling_y_e,
+        geo_scaling_z_l,
+        geo_scaling_z_e,
     ]]
     # END Scaling factor
 
     # Import object name
-    stl_objname_layout = QtGui.QHBoxLayout()
-    stl_objname_label = QtGui.QLabel(__("Import object name: "))
-    stl_objname_text = QtGui.QLineEdit("ImportedSTL")
-    [stl_objname_layout.addWidget(x) for x in [stl_objname_label, stl_objname_text]]
+    geo_objname_layout = QtGui.QHBoxLayout()
+    geo_objname_label = QtGui.QLabel(__("Import object name: "))
+    geo_objname_text = QtGui.QLineEdit("ImportedGEO")
+    [geo_objname_layout.addWidget(x) for x in [geo_objname_label, geo_objname_text]]
     # End object name
 
     # Add component layouts to group layout
-    [stl_group_layout.addLayout(x) for x in [stl_file_layout, stl_scaling_layout, stl_objname_layout]]
-    stl_group_layout.addStretch(1)
-    stl_group.setLayout(stl_group_layout)
+    [geo_group_layout.addLayout(x) for x in [geo_file_layout, geo_scaling_layout, geo_objname_layout]]
+    geo_group_layout.addStretch(1)
+    geo_group.setLayout(geo_group_layout)
 
     # Create button layout
-    stl_button_layout = QtGui.QHBoxLayout()
-    stl_button_ok = QtGui.QPushButton(__("Import"))
-    stl_button_cancel = QtGui.QPushButton(__("Cancel"))
-    stl_button_cancel.clicked.connect(lambda: stl_dialog.reject())
-    stl_button_layout.addStretch(1)
-    stl_button_layout.addWidget(stl_button_cancel)
-    stl_button_layout.addWidget(stl_button_ok)
+    geo_button_layout = QtGui.QHBoxLayout()
+    geo_button_ok = QtGui.QPushButton(__("Import"))
+    geo_button_cancel = QtGui.QPushButton(__("Cancel"))
+    geo_button_cancel.clicked.connect(lambda: geo_dialog.reject())
+    geo_button_layout.addStretch(1)
+    geo_button_layout.addWidget(geo_button_cancel)
+    geo_button_layout.addWidget(geo_button_ok)
 
     # Compose main window layout
-    stl_dialog_layout.addWidget(stl_group)
-    stl_dialog_layout.addStretch(1)
-    stl_dialog_layout.addLayout(stl_button_layout)
+    geo_dialog_layout.addWidget(geo_group)
+    geo_dialog_layout.addStretch(1)
+    geo_dialog_layout.addLayout(geo_button_layout)
 
-    stl_dialog.setLayout(stl_dialog_layout)
+    geo_dialog.setLayout(geo_dialog_layout)
 
     # STL Dialog function definition and connections
-    def stl_ok_clicked():
+    def geo_ok_clicked():
         """ Defines ok button behaviour"""
-        [stl_scaling_edit.setText(stl_scaling_edit.text().replace(",", ".")) for stl_scaling_edit in [
-            stl_scaling_x_e,
-            stl_scaling_y_e,
-            stl_scaling_z_e
+        [geo_scaling_edit.setText(geo_scaling_edit.text().replace(",", ".")) for geo_scaling_edit in [
+            geo_scaling_x_e,
+            geo_scaling_y_e,
+            geo_scaling_z_e
         ]]
         try:
-            utils.import_stl(
-                filename=str(stl_file_path.text()),
-                scale_x=float(stl_scaling_x_e.text()),
-                scale_y=float(stl_scaling_y_e.text()),
-                scale_z=float(stl_scaling_z_e.text()),
-                name=str(stl_objname_text.text()))
-            stl_dialog.accept()
+            utils.import_geo(
+                filename=str(geo_file_path.text()),
+                scale_x=float(geo_scaling_x_e.text()),
+                scale_y=float(geo_scaling_y_e.text()),
+                scale_z=float(geo_scaling_z_e.text()),
+                name=str(geo_objname_text.text()))
+            geo_dialog.accept()
         except ValueError:
             utils.error(__("There was an error. Are you sure you wrote correct float values in the scaling factor?"))
             guiutils.error_dialog(__("There was an error. Are you sure you wrote correct float values in the sacaling factor?"))
 
-    def stl_dialog_browse():
+    def geo_dialog_browse():
         """ Defines the browse button behaviour."""
         # noinspection PyArgumentList
-        file_name_temp, _ = filedialog.getOpenFileName(fc_main_window, __("Select STL to import"), QtCore.QDir.homePath(), "STL Files (*.stl)")
-        stl_file_path.setText(file_name_temp)
-        stl_dialog.raise_()
-        stl_dialog.activateWindow()
+        file_name_temp, _ = filedialog.getOpenFileName(fc_main_window, __("Select GEO to import"),
+                                                       QtCore.QDir.homePath(), "STL Files (*.stl);;PLY Files "
+                                                                               "(*.ply);;VTK Files (*.vtk)")
+        geo_file_path.setText(file_name_temp)
+        geo_dialog.raise_()
+        geo_dialog.activateWindow()
 
-    stl_button_cancel.clicked.connect(lambda: stl_dialog.reject())
-    stl_button_ok.clicked.connect(stl_ok_clicked)
-    stl_file_browse.clicked.connect(stl_dialog_browse)
+    geo_button_cancel.clicked.connect(lambda: geo_dialog.reject())
+    geo_button_ok.clicked.connect(geo_ok_clicked)
+    geo_file_browse.clicked.connect(geo_dialog_browse)
 
-    stl_dialog.exec_()
+    geo_dialog.exec_()
 
 
 def on_import_xml():
@@ -977,7 +982,7 @@ def on_import_xml():
         data.update(config)
 
         # Add results to DSPH objects
-        for key, value in objects.iteritems():
+        for key, value in objects.items():
             add_object_to_sim(key)
             data['simobjects'][key] = value
             # Change visual properties based on fill mode and type
@@ -1102,13 +1107,15 @@ def on_special_button():
 
     # TODO: Low-priority: This should be implemented in a class like SpecialOptionsSelector(QtGui.QDialog)
     sp_window = QtGui.QDialog()
+    sp_window.setWindowTitle(__("Special"))
+    sp_window.setMinimumWidth(200)
     sp_window_layout = QtGui.QVBoxLayout()
 
     sp_damping_button = QtGui.QPushButton(__("Damping"))
     sp_inlet_button = QtGui.QPushButton(__("Inlet/Outlet"))
     sp_inlet_button.setEnabled(False)
     sp_chrono_button = QtGui.QPushButton(__("Coupling CHRONO"))
-    sp_chrono_button.setEnabled(False)
+    #sp_chrono_button.setEnabled(False)
     sp_multilayeredmb_button = QtGui.QPushButton(__("Multi-layered Piston"))
     sp_multilayeredmb_menu = QtGui.QMenu()
     sp_multilayeredmb_menu.addAction(__("1 Dimension"))
@@ -1128,6 +1135,16 @@ def on_special_button():
     def on_damping_option():
         """ Defines damping button behaviour"""
         on_add_damping_zone()
+        sp_window.accept()
+
+    def on_inlet_option():
+        """ Defines Inlet/Outlet behaviour """
+        on_add_inlet()
+        sp_window.accept()
+
+    def on_chrono_option():
+        """ Defines Coupling CHRONO behaviour"""
+        on_add_chrono()
         sp_window.accept()
 
     def on_multilayeredmb_menu(action):
@@ -1315,6 +1332,8 @@ def on_special_button():
             data['accinput'] = accinput_dialog.get_result()
 
     sp_damping_button.clicked.connect(on_damping_option)
+    sp_inlet_button.clicked.connect(on_inlet_option)
+    sp_chrono_button.clicked.connect(on_chrono_option)
     sp_multilayeredmb_menu.triggered.connect(on_multilayeredmb_menu)
     sp_relaxationzone_menu.triggered.connect(on_relaxationzone_menu)
     sp_accinput_button.clicked.connect(on_accinput_button)
@@ -1339,7 +1358,7 @@ casecontrols_menu_newdoc.triggered.connect(on_newdoc_menu)
 casecontrols_menu_savemenu.triggered.connect(on_save_menu)
 casecontrols_bt_loaddoc.clicked.connect(on_load_button)
 casecontrols_bt_addfillbox.clicked.connect(on_add_fillbox)
-casecontrols_bt_addstl.clicked.connect(on_add_stl)
+casecontrols_bt_addgeo.clicked.connect(on_add_stl)
 casecontrols_bt_importxml.clicked.connect(on_import_xml)
 summary_bt.clicked.connect(on_summary)
 toggle3dbutton.clicked.connect(on_2d_toggle)
@@ -1353,80 +1372,16 @@ ccfilebuttons_layout.addWidget(casecontrols_bt_loaddoc)
 ccsecondrow_layout.addWidget(summary_bt)
 ccsecondrow_layout.addWidget(toggle3dbutton)
 ccthirdrow_layout.addWidget(casecontrols_bt_addfillbox)
-ccthirdrow_layout.addWidget(casecontrols_bt_addstl)
+ccthirdrow_layout.addWidget(casecontrols_bt_addgeo)
 ccthirdrow_layout.addWidget(casecontrols_bt_importxml)
 ccfourthrow_layout.addWidget(casecontrols_bt_special)
-ccfivethrow_layout.addWidget(rungencase_bt)
+ccfourthrow_layout.addWidget(rungencase_bt)
 
 cc_layout.addLayout(cclabel_layout)
 cc_layout.addLayout(ccfilebuttons_layout)
 cc_layout.addLayout(ccthirdrow_layout)
 cc_layout.addLayout(ccsecondrow_layout)
 cc_layout.addLayout(ccfourthrow_layout)
-cc_layout.addLayout(ccfivethrow_layout)
-
-# Defines run window dialog
-# TODO: This should be a custom implementation in a class like RunDialog(QtGui.QDialog)
-run_dialog = QtGui.QDialog()
-run_watcher = QtCore.QFileSystemWatcher()
-
-# Title and size
-run_dialog.setModal(False)
-run_dialog.setWindowTitle(__("DualSPHysics Simulation: {}%").format("0"))
-run_dialog_layout = QtGui.QVBoxLayout()
-
-# Information GroupBox
-run_group = QtGui.QGroupBox(__("Simulation Data"))
-run_group_layout = QtGui.QVBoxLayout()
-
-run_group_label_case = QtGui.QLabel(__("Case name: "))
-run_group_label_proc = QtGui.QLabel(__("Simulation processor: "))
-run_group_label_part = QtGui.QLabel(__("Number of particles: "))
-run_group_label_partsout = QtGui.QLabel(__("Total particles out: "))
-run_group_label_eta = QtGui.QLabel(run_dialog)
-run_group_label_eta.setText(__("Estimated time to complete simulation: {}").format("Calculating..."))
-
-run_group_layout.addWidget(run_group_label_case)
-run_group_layout.addWidget(run_group_label_proc)
-run_group_layout.addWidget(run_group_label_part)
-run_group_layout.addWidget(run_group_label_partsout)
-run_group_layout.addWidget(run_group_label_eta)
-run_group_layout.addStretch(1)
-
-run_group.setLayout(run_group_layout)
-
-# Progress Bar
-run_progbar_layout = QtGui.QHBoxLayout()
-run_progbar_bar = QtGui.QProgressBar()
-run_progbar_bar.setRange(0, 100)
-run_progbar_bar.setTextVisible(False)
-run_progbar_layout.addWidget(run_progbar_bar)
-
-# Buttons
-run_button_layout = QtGui.QHBoxLayout()
-run_button_details = QtGui.QPushButton(__("Details"))
-run_button_cancel = QtGui.QPushButton(__("Cancel Simulation"))
-run_button_layout.addStretch(1)
-run_button_layout.addWidget(run_button_details)
-run_button_layout.addWidget(run_button_cancel)
-
-run_dialog_layout.addWidget(run_group)
-run_dialog_layout.addLayout(run_progbar_layout)
-run_dialog_layout.addLayout(run_button_layout)
-
-run_dialog.setLayout(run_dialog_layout)
-
-# Defines run details
-run_details = QtGui.QDialog()
-run_details.setModal(False)
-run_details.setWindowTitle(__("Simulation details"))
-run_details_layout = QtGui.QVBoxLayout()
-
-run_details_text = QtGui.QTextEdit()
-run_details_text.setReadOnly(True)
-run_details_layout.addWidget(run_details_text)
-
-run_details.setLayout(run_details_layout)
 
 
 def on_ex_simulate():
@@ -1443,16 +1398,17 @@ def on_ex_simulate():
         run_warning_dialog.setIcon(QtGui.QMessageBox.Warning)
         run_warning_dialog.exec_()
 
-    run_progbar_bar.setValue(0)
+    run_dialog = dsphwidgets.RunDialog()
+    run_dialog.run_progbar_bar.setValue(0)
     data['simulation_done'] = False
     guiutils.widget_state_config(widget_state_elements, "sim start")
-    run_button_cancel.setText(__("Cancel Simulation"))
+    run_dialog.run_button_cancel.setText(__("Cancel Simulation"))
     run_dialog.setWindowTitle(__("DualSPHysics Simulation: {}%").format("0"))
-    run_group_label_case.setText(__("Case name: ") + data['project_name'])
-    run_group_label_proc.setText(__("Simulation processor: ") + str(ex_selector_combo.currentText()))
-    run_group_label_part.setText(__("Number of particles: ") + str(data['total_particles']))
-    run_group_label_partsout.setText(__("Total particles out: ") + "0")
-    run_group_label_eta.setText(__("Estimated time to complete simulation: ") + __("Calculating..."))
+    run_dialog.run_group_label_case.setText(__("Case name: ") + data['project_name'])
+    run_dialog.run_group_label_proc.setText(__("Simulation processor: ") + str(ex_selector_combo.currentText()))
+    run_dialog.run_group_label_part.setText(__("Number of particles: ") + str(data['total_particles']))
+    run_dialog.run_group_label_partsout.setText(__("Total particles out: ") + "0")
+    run_dialog.run_group_label_eta.setText(__("Estimated time to complete simulation: ") + __("Calculating..."))
 
     # Cancel button handler
     def on_cancel():
@@ -1460,29 +1416,29 @@ def on_ex_simulate():
         if temp_data['current_process'] is not None:
             temp_data['current_process'].kill()
         run_dialog.hide()
-        run_details.hide()
+        run_dialog.run_details.hide()
         data['simulation_done'] = False
         guiutils.widget_state_config(widget_state_elements, "sim cancel")
 
-    run_button_cancel.clicked.connect(on_cancel)
+    run_dialog.run_button_cancel.clicked.connect(on_cancel)
 
     def on_details():
         """ Details button handler. Opens and closes the details pane on the execution window."""
-        if run_details.isVisible():
+        if run_dialog.run_details.isVisible():
             utils.debug('Hiding details pane on execution')
-            run_details.hide()
+            run_dialog.run_details.hide()
         else:
             utils.debug('Showing details pane on execution')
-            run_details.show()
-            run_details.move(run_dialog.x() - run_details.width() - 15, run_dialog.y())
+            run_dialog.run_details.show()
+            run_dialog.run_details.move(run_dialog.x() - run_dialog.run_details.width() - 15, run_dialog.y())
 
     # Ensure run button has no connections
     try:
-        run_button_details.clicked.disconnect()
+        run_dialog.run_button_details.clicked.disconnect()
     except RuntimeError:
         pass
 
-    run_button_details.clicked.connect(on_details)
+    run_dialog.run_button_details.clicked.connect(on_details)
 
     # Launch simulation and watch filesystem to monitor simulation
     filelist = [f for f in os.listdir(data['project_path'] + '/' + data['project_name'] + "_out/") if f.startswith("Part")]
@@ -1494,12 +1450,12 @@ def on_ex_simulate():
 
         # Reads output and completes the progress bar
         output = temp_data['current_process'].readAllStandardOutput()
-        run_details_text.setText(str(output))
-        run_details_text.moveCursor(QtGui.QTextCursor.End)
-        run_watcher.removePath(data['project_path'] + '/' + data['project_name'] + "_out/")
+        run_dialog.run_details_text.setText(str(output))
+        run_dialog.run_details_text.moveCursor(QtGui.QTextCursor.End)
+        run_dialog.run_watcher.removePath(data['project_path'] + '/' + data['project_name'] + "_out/")
         run_dialog.setWindowTitle(__("DualSPHysics Simulation: Complete"))
-        run_progbar_bar.setValue(100)
-        run_button_cancel.setText(__("Close"))
+        run_dialog.run_progbar_bar.setValue(100)
+        run_dialog.run_button_cancel.setText(__("Close"))
 
         if exit_code == 0:
             # Simulation went correctly
@@ -1510,7 +1466,7 @@ def on_ex_simulate():
             if "exception" in str(output).lower():
                 utils.error(__("Exception in execution."))
                 run_dialog.setWindowTitle(__("DualSPHysics Simulation: Error"))
-                run_progbar_bar.setValue(0)
+                run_dialog.run_progbar_bar.setValue(0)
                 run_dialog.hide()
                 guiutils.widget_state_config(widget_state_elements, "sim error")
                 execution_error_dialog = QtGui.QMessageBox()
@@ -1549,8 +1505,8 @@ def on_ex_simulate():
             pass
 
         # Fill details window
-        run_details_text.setText("".join(run_file_data))
-        run_details_text.moveCursor(QtGui.QTextCursor.End)
+        run_dialog.run_details_text.setText("".join(run_file_data))
+        run_dialog.run_details_text.moveCursor(QtGui.QTextCursor.End)
 
         # Set percentage scale based on timemax
         for l in run_file_data:
@@ -1563,7 +1519,7 @@ def on_ex_simulate():
             last_line_parttime = run_file_data[-1].split(".")
             if "Part_" in last_line_parttime[0]:
                 current_value = (float(last_line_parttime[0].split(" ")[-1] + "." + last_line_parttime[1][:2]) * float(100)) / float(data['timemax'])
-                run_progbar_bar.setValue(current_value)
+                run_dialog.run_progbar_bar.setValue(current_value)
                 run_dialog.setWindowTitle(__("DualSPHysics Simulation: {}%").format(
                     str(format(current_value, ".2f"))))
 
@@ -1571,17 +1527,17 @@ def on_ex_simulate():
             if ("===" not in last_line_time) and ("CellDiv" not in last_line_time) and ("memory" not in last_line_time) and ("-" in last_line_time):
                 # Update time field
                 try:
-                    run_group_label_eta.setText(__("Estimated time to complete simulation: ") + last_line_time)
+                    run_dialog.run_group_label_eta.setText(__("Estimated time to complete simulation: ") + last_line_time)
                 except RuntimeError:
                     run_group_label_eta.setText(__("Estimated time to complete simulation: ") + "Calculating...")
         elif "Particles out:" in run_file_data[-1]:
             totalpartsout = int(run_file_data[-1].split("(total: ")[1].split(")")[0])
             data['total_particles_out'] = totalpartsout
-            run_group_label_partsout.setText(__("Total particles out: {}").format(str(data['total_particles_out'])))
+            run_dialog.run_group_label_partsout.setText(__("Total particles out: {}").format(str(data['total_particles_out'])))
 
     # Set filesystem watcher to the out directory.
-    run_watcher.addPath(data['project_path'] + '/' + data['project_name'] + "_out/")
-    run_watcher.directoryChanged.connect(on_fs_change)
+    run_dialog.run_watcher.addPath(data['project_path'] + '/' + data['project_name'] + "_out/")
+    run_dialog.run_watcher.directoryChanged.connect(on_fs_change)
 
     data['run_gen_case_first'] = False
 
@@ -2596,151 +2552,9 @@ def on_measuretool():
         measurepoints_tool_dialog.exec_()
 
     def on_mtool_set_grid():
-        """ Defines grid point button behaviour."""
-        # TODO: This should be implemented as a custom class like MeasureToolGridDialog(QtGui.QDialog)
-        measuregrid_tool_dialog = QtGui.QDialog()
+
+        measuregrid_tool_dialog = dsphwidgets.MeasureToolGridDialog(temp_data)
         measuregrid_tool_dialog.setModal(False)
-        measuregrid_tool_dialog.setWindowTitle(__("MeasureTool Points"))
-        measuregrid_tool_layout = QtGui.QVBoxLayout()
-        mgrid_table = QtGui.QTableWidget()
-        mgrid_table.setRowCount(100)
-        mgrid_table.setColumnCount(12)
-        mgrid_table.verticalHeader().setVisible(False)
-        mgrid_table.setHorizontalHeaderLabels([
-            "BeginX",
-            "BeginY",
-            "BeginZ",
-            "StepX",
-            "StepY",
-            "StepZ",
-            "CountX",
-            "CountY",
-            "CountZ",
-            "FinalX",
-            "FinalY",
-            "FinalZ"
-        ])
-
-        for i, grid in enumerate(temp_data['measuretool_grid']):
-            for j in range(0, mgrid_table.columnCount() - 3):
-                mgrid_table.setItem(i, j, QtGui.QTableWidgetItem(str(grid[j])))
-
-        for mgrid_row in range(0, mgrid_table.rowCount()):
-            mgrid_table.setItem(mgrid_row, 9, QtGui.QTableWidgetItem(""))
-            mgrid_table.setItem(mgrid_row, 10, QtGui.QTableWidgetItem(""))
-            mgrid_table.setItem(mgrid_row, 11, QtGui.QTableWidgetItem(""))
-            mgrid_table.item(mgrid_row, 9).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            mgrid_table.item(mgrid_row, 10).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            mgrid_table.item(mgrid_row, 11).setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
-        def on_mgrid_change(row, column):
-            """ Defines what happens when a field changes on the table"""
-            if column > 8:
-                return
-            for mgrid_row in range(0, mgrid_table.rowCount()):
-                try:
-                    current_grid = [
-                        float(mgrid_table.item(mgrid_row, 0).text()),
-                        float(mgrid_table.item(mgrid_row, 1).text()),
-                        float(mgrid_table.item(mgrid_row, 2).text()),
-                        float(mgrid_table.item(mgrid_row, 3).text()),
-                        float(mgrid_table.item(mgrid_row, 4).text()),
-                        float(mgrid_table.item(mgrid_row, 5).text()),
-                        int(mgrid_table.item(mgrid_row, 6).text()),
-                        int(mgrid_table.item(mgrid_row, 7).text()),
-                        int(mgrid_table.item(mgrid_row, 8).text())
-                    ]
-
-                    utils.debug(current_grid)
-
-                    # Make the operations to calculate final points
-                    mgrid_table.setItem(mgrid_row, 9, QtGui.QTableWidgetItem(str(
-                        float(current_grid[0]) +
-                        float(current_grid[6] - 1) *
-                        float(current_grid[3])
-                    )))
-                    mgrid_table.setItem(mgrid_row, 10, QtGui.QTableWidgetItem(str(
-                        float(current_grid[1]) +
-                        float(current_grid[7] - 1) *
-                        float(current_grid[4])
-                    )))
-                    mgrid_table.setItem(mgrid_row, 11, QtGui.QTableWidgetItem(str(
-                        float(current_grid[2]) +
-                        float(current_grid[8] - 1) *
-                        float(current_grid[5])
-                    )))
-
-                    if current_grid[6] is 0:
-                        mgrid_table.setItem(mgrid_row, 9, QtGui.QTableWidgetItem(str(
-                            "0"
-                        )))
-                    if current_grid[7] is 0:
-                        mgrid_table.setItem(mgrid_row, 10, QtGui.QTableWidgetItem(str(
-                            "0"
-                        )))
-                    if current_grid[8] is 0:
-                        mgrid_table.setItem(mgrid_row, 11, QtGui.QTableWidgetItem(str(
-                            "0"
-                        )))
-
-                    # Those should not be used
-                    mgrid_table.item(mgrid_row, 9).setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    mgrid_table.item(mgrid_row, 10).setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    mgrid_table.item(mgrid_row, 11).setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                except (ValueError, AttributeError):
-                    pass
-
-        def on_mgrid_accept():
-            """ MeasureTool point grid accept button behaviour."""
-            temp_data['measuretool_grid'] = list()
-            for mgrid_row in range(0, mgrid_table.rowCount()):
-                try:
-                    current_grid = [
-                        float(mgrid_table.item(mgrid_row, 0).text()),
-                        float(mgrid_table.item(mgrid_row, 1).text()),
-                        float(mgrid_table.item(mgrid_row, 2).text()),
-                        float(mgrid_table.item(mgrid_row, 3).text()),
-                        float(mgrid_table.item(mgrid_row, 4).text()),
-                        float(mgrid_table.item(mgrid_row, 5).text()),
-                        float(mgrid_table.item(mgrid_row, 6).text()),
-                        float(mgrid_table.item(mgrid_row, 7).text()),
-                        float(mgrid_table.item(mgrid_row, 8).text())
-                    ]
-                    temp_data['measuretool_grid'].append(current_grid)
-                except (ValueError, AttributeError):
-                    pass
-
-            # Deletes the list of points (not compatible together)
-            temp_data['measuretool_points'] = list()
-            measuregrid_tool_dialog.accept()
-
-        def on_mgrid_cancel():
-            """ MeasureTool point grid cancel button behaviour"""
-            measuregrid_tool_dialog.reject()
-
-        # Compute possible final points
-        on_mgrid_change(0, 0)
-
-        mgrid_bt_layout = QtGui.QHBoxLayout()
-        mgrid_cancel = QtGui.QPushButton(__("Cancel"))
-        mgrid_accept = QtGui.QPushButton(__("OK"))
-        mgrid_accept.clicked.connect(on_mgrid_accept)
-        mgrid_cancel.clicked.connect(on_mgrid_cancel)
-
-        mgrid_bt_layout.addWidget(mgrid_accept)
-        mgrid_bt_layout.addWidget(mgrid_cancel)
-
-        mgrid_table.cellChanged.connect(on_mgrid_change)
-
-        measuregrid_tool_layout.addWidget(mgrid_table)
-        measuregrid_tool_layout.addLayout(mgrid_bt_layout)
-
-        measuregrid_tool_dialog.setLayout(measuregrid_tool_layout)
-        measuregrid_tool_dialog.resize(1250, 400)
-        measuregrid_tool_dialog.exec_()
 
     mtool_types_chk_all.stateChanged.connect(on_mtool_measure_all_change)
     mtool_types_chk_vel.stateChanged.connect(on_mtool_measure_single_change)
@@ -3468,7 +3282,7 @@ properties_scaff_widget = QtGui.QWidget()
 property_widget_layout = QtGui.QVBoxLayout()
 
 # Property table
-object_property_table = QtGui.QTableWidget(6, 2)
+object_property_table = QtGui.QTableWidget(7, 2)
 object_property_table.setMinimumHeight(220)
 object_property_table.setHorizontalHeaderLabels([__("Property Name"), __("Value")])
 object_property_table.verticalHeader().setVisible(False)
@@ -3515,6 +3329,8 @@ material_label = QtGui.QLabel("   {}".format(__("Material")))
 material_label.setToolTip(__("Sets material for this object"))
 motion_label = QtGui.QLabel("   {}".format(__("Motion")))
 motion_label.setToolTip(__("Sets motion for this object"))
+simplewall_label = QtGui.QLabel("   {}".format(__("Faces")))
+simplewall_label.setToolTip(__("Adds faces"))
 
 mkgroup_label.setAlignment(QtCore.Qt.AlignLeft)
 material_label.setAlignment(QtCore.Qt.AlignLeft)
@@ -3530,6 +3346,7 @@ object_property_table.setCellWidget(2, 0, fillmode_label)
 object_property_table.setCellWidget(3, 0, floatstate_label)
 object_property_table.setCellWidget(4, 0, initials_label)
 object_property_table.setCellWidget(5, 0, motion_label)
+object_property_table.setCellWidget(6, 0, simplewall_label)
 
 
 def mkgroup_change(value):
@@ -3603,6 +3420,8 @@ def fillmode_change(index):
             except AttributeError:
                 # Cannot change transparency. Just ignore
                 pass
+        wall_prop.setEnabled(False)
+        faces_status(selection)
     elif fillmode_prop.itemText(index).lower() == "solid":
         if objtype_prop.itemText(objtype_prop.currentIndex()).lower() == "fluid":
             try:
@@ -3616,966 +3435,52 @@ def fillmode_change(index):
             except AttributeError:
                 # Cannot change transparency (fillbox?). Just ignore
                 pass
+        wall_prop.setEnabled(False)
+        faces_status(selection)
     elif fillmode_prop.itemText(index).lower() == "face":
         try:
             selectiongui.Transparency = 80
         except AttributeError:
             # Cannot change transparency. Just ignore
             pass
+        wall_prop.setEnabled(True)
+        faces_status(selection)
     elif fillmode_prop.itemText(index).lower() == "wire":
         try:
             selectiongui.Transparency = 85
         except AttributeError:
             # Cannot change transparency. Just ignore
             pass
-
-
-def floatstate_change():
-    """ Defines a window with floating properties. """
-    # TODO: This should be implemented as a custom class like FloatStateDialog(QtGui.QDialog)
-    floatings_window = QtGui.QDialog()
-    floatings_window.setWindowTitle(__("Floating configuration"))
-    ok_button = QtGui.QPushButton(__("Ok"))
-    cancel_button = QtGui.QPushButton(__("Cancel"))
-    target_mk = int(data['simobjects'][FreeCADGui.Selection.getSelection()[0].Name][0])
-
-    def on_ok():
-        guiutils.info_dialog(__("This will apply the floating properties to all objects with mkbound = ") + str(target_mk))
-        if is_floating_selector.currentIndex() == 1:
-            # Floating false
-            if str(target_mk) in data['floating_mks'].keys():
-                data['floating_mks'].pop(str(target_mk), None)
-        else:
-            # Floating true
-            # Structure: 'mk': [massrhop, center, inertia, velini, omegaini]
-            # Structure: 'mk': FloatProperty
-            fp = FloatProperty()  # FloatProperty to be inserted
-            fp.mk = target_mk
-            fp.mass_density_type = floating_props_massrhop_selector.currentIndex()
-            fp.mass_density_value = float(floating_props_massrhop_input.text())
-
-            if floating_center_auto.isChecked():
-                fp.gravity_center = list()
-            else:
-                fp.gravity_center = [
-                    float(floating_center_input_x.text()),
-                    float(floating_center_input_y.text()),
-                    float(floating_center_input_z.text())
-                ]
-
-            if floating_center_auto.isChecked():
-                fp.gravity_center = list()
-            else:
-                fp.gravity_center = [
-                    float(floating_center_input_x.text()),
-                    float(floating_center_input_y.text()),
-                    float(floating_center_input_z.text())
-                ]
-
-            if floating_inertia_auto.isChecked():
-                fp.inertia = list()
-            else:
-                fp.inertia = [
-                    float(floating_inertia_input_x.text()),
-                    float(floating_inertia_input_y.text()),
-                    float(floating_inertia_input_z.text())
-                ]
-
-            if floating_velini_auto.isChecked():
-                fp.initial_linear_velocity = list()
-            else:
-                fp.initial_linear_velocity = [
-                    float(floating_velini_input_x.text()),
-                    float(floating_velini_input_y.text()),
-                    float(floating_velini_input_z.text())
-                ]
-
-            if floating_omegaini_auto.isChecked():
-                fp.initial_angular_velocity = list()
-            else:
-                fp.initial_angular_velocity = [
-                    float(floating_omegaini_input_x.text()),
-                    float(floating_omegaini_input_y.text()),
-                    float(floating_omegaini_input_z.text())
-                ]
-
-            data['floating_mks'][str(target_mk)] = fp
-
-        floatings_window.accept()
-
-    def on_cancel():
-        floatings_window.reject()
-
-    def on_floating_change(index):
-        if index == 0:
-            floating_props_group.setEnabled(True)
-        else:
-            floating_props_group.setEnabled(False)
-
-    def on_massrhop_change(index):
-        if index == 0:
-            floating_props_massrhop_input.setText("0.0")
-        else:
-            floating_props_massrhop_input.setText("0.0")
-
-    def on_gravity_auto():
-        if floating_center_auto.isChecked():
-            floating_center_input_x.setEnabled(False)
-            floating_center_input_y.setEnabled(False)
-            floating_center_input_z.setEnabled(False)
-        else:
-            floating_center_input_x.setEnabled(True)
-            floating_center_input_y.setEnabled(True)
-            floating_center_input_z.setEnabled(True)
-
-    def on_inertia_auto():
-        if floating_inertia_auto.isChecked():
-            floating_inertia_input_x.setEnabled(False)
-            floating_inertia_input_y.setEnabled(False)
-            floating_inertia_input_z.setEnabled(False)
-        else:
-            floating_inertia_input_x.setEnabled(True)
-            floating_inertia_input_y.setEnabled(True)
-            floating_inertia_input_z.setEnabled(True)
-
-    def on_velini_auto():
-        if floating_velini_auto.isChecked():
-            floating_velini_input_x.setEnabled(False)
-            floating_velini_input_y.setEnabled(False)
-            floating_velini_input_z.setEnabled(False)
-        else:
-            floating_velini_input_x.setEnabled(True)
-            floating_velini_input_y.setEnabled(True)
-            floating_velini_input_z.setEnabled(True)
-
-    def on_omegaini_auto():
-        if floating_omegaini_auto.isChecked():
-            floating_omegaini_input_x.setEnabled(False)
-            floating_omegaini_input_y.setEnabled(False)
-            floating_omegaini_input_z.setEnabled(False)
-        else:
-            floating_omegaini_input_x.setEnabled(True)
-            floating_omegaini_input_y.setEnabled(True)
-            floating_omegaini_input_z.setEnabled(True)
-
-    ok_button.clicked.connect(on_ok)
-    cancel_button.clicked.connect(on_cancel)
-
-    is_floating_layout = QtGui.QHBoxLayout()
-    is_floating_label = QtGui.QLabel(__("Set floating: "))
-    is_floating_label.setToolTip(__("Sets the current MKBound selected as floating."))
-    is_floating_selector = QtGui.QComboBox()
-    is_floating_selector.insertItems(0, ["True", "False"])
-    is_floating_selector.currentIndexChanged.connect(on_floating_change)
-    is_floating_targetlabel = QtGui.QLabel(__("Target MKBound: ") + str(target_mk))
-    is_floating_layout.addWidget(is_floating_label)
-    is_floating_layout.addWidget(is_floating_selector)
-    is_floating_layout.addStretch(1)
-    is_floating_layout.addWidget(is_floating_targetlabel)
-
-    floating_props_group = QtGui.QGroupBox(__("Floating properties"))
-    floating_props_layout = QtGui.QVBoxLayout()
-    floating_props_massrhop_layout = QtGui.QHBoxLayout()
-    floating_props_massrhop_label = QtGui.QLabel(__("Mass/Density: "))
-    floating_props_massrhop_label.setToolTip(__("Selects an mass/density calculation method and its value."))
-    floating_props_massrhop_selector = QtGui.QComboBox()
-    floating_props_massrhop_selector.insertItems(0, ['massbody (kg)', 'rhopbody (kg/m^3)'])
-    floating_props_massrhop_selector.currentIndexChanged.connect(on_massrhop_change)
-    floating_props_massrhop_input = QtGui.QLineEdit()
-    floating_props_massrhop_layout.addWidget(floating_props_massrhop_label)
-    floating_props_massrhop_layout.addWidget(floating_props_massrhop_selector)
-    floating_props_massrhop_layout.addWidget(floating_props_massrhop_input)
-
-    floating_center_layout = QtGui.QHBoxLayout()
-    floating_center_label = QtGui.QLabel(__("Gravity center (m): "))
-    floating_center_label.setToolTip(__("Sets the mk group gravity center."))
-    floating_center_label_x = QtGui.QLabel("X")
-    floating_center_input_x = QtGui.QLineEdit()
-    floating_center_label_y = QtGui.QLabel("Y")
-    floating_center_input_y = QtGui.QLineEdit()
-    floating_center_label_z = QtGui.QLabel("Z")
-    floating_center_input_z = QtGui.QLineEdit()
-    floating_center_auto = QtGui.QCheckBox("Auto ")
-    floating_center_auto.toggled.connect(on_gravity_auto)
-    floating_center_layout.addWidget(floating_center_label)
-    floating_center_layout.addWidget(floating_center_label_x)
-    floating_center_layout.addWidget(floating_center_input_x)
-    floating_center_layout.addWidget(floating_center_label_y)
-    floating_center_layout.addWidget(floating_center_input_y)
-    floating_center_layout.addWidget(floating_center_label_z)
-    floating_center_layout.addWidget(floating_center_input_z)
-    floating_center_layout.addWidget(floating_center_auto)
-
-    floating_inertia_layout = QtGui.QHBoxLayout()
-    floating_inertia_label = QtGui.QLabel(__("Inertia (kg*m<sup>2</sup>): "))
-    floating_inertia_label.setToolTip(__("Sets the MK group inertia."))
-    floating_inertia_label_x = QtGui.QLabel("X")
-    floating_inertia_input_x = QtGui.QLineEdit()
-    floating_inertia_label_y = QtGui.QLabel("Y")
-    floating_inertia_input_y = QtGui.QLineEdit()
-    floating_inertia_label_z = QtGui.QLabel("Z")
-    floating_inertia_input_z = QtGui.QLineEdit()
-    floating_inertia_auto = QtGui.QCheckBox("Auto ")
-    floating_inertia_auto.toggled.connect(on_inertia_auto)
-    floating_inertia_layout.addWidget(floating_inertia_label)
-    floating_inertia_layout.addWidget(floating_inertia_label_x)
-    floating_inertia_layout.addWidget(floating_inertia_input_x)
-    floating_inertia_layout.addWidget(floating_inertia_label_y)
-    floating_inertia_layout.addWidget(floating_inertia_input_y)
-    floating_inertia_layout.addWidget(floating_inertia_label_z)
-    floating_inertia_layout.addWidget(floating_inertia_input_z)
-    floating_inertia_layout.addWidget(floating_inertia_auto)
-
-    floating_velini_layout = QtGui.QHBoxLayout()
-    floating_velini_label = QtGui.QLabel(__("Initial linear velocity: "))
-    floating_velini_label.setToolTip(__("Sets the MK group initial linear velocity"))
-    floating_velini_label_x = QtGui.QLabel("X")
-    floating_velini_input_x = QtGui.QLineEdit()
-    floating_velini_label_y = QtGui.QLabel("Y")
-    floating_velini_input_y = QtGui.QLineEdit()
-    floating_velini_label_z = QtGui.QLabel("Z")
-    floating_velini_input_z = QtGui.QLineEdit()
-    floating_velini_auto = QtGui.QCheckBox("Auto ")
-    floating_velini_auto.toggled.connect(on_velini_auto)
-    floating_velini_layout.addWidget(floating_velini_label)
-    floating_velini_layout.addWidget(floating_velini_label_x)
-    floating_velini_layout.addWidget(floating_velini_input_x)
-    floating_velini_layout.addWidget(floating_velini_label_y)
-    floating_velini_layout.addWidget(floating_velini_input_y)
-    floating_velini_layout.addWidget(floating_velini_label_z)
-    floating_velini_layout.addWidget(floating_velini_input_z)
-    floating_velini_layout.addWidget(floating_velini_auto)
-
-    floating_omegaini_layout = QtGui.QHBoxLayout()
-    floating_omegaini_label = QtGui.QLabel(__("Initial angular velocity: "))
-    floating_omegaini_label.setToolTip(__("Sets the MK group initial angular velocity"))
-    floating_omegaini_label_x = QtGui.QLabel("X")
-    floating_omegaini_input_x = QtGui.QLineEdit()
-    floating_omegaini_label_y = QtGui.QLabel("Y")
-    floating_omegaini_input_y = QtGui.QLineEdit()
-    floating_omegaini_label_z = QtGui.QLabel("Z")
-    floating_omegaini_input_z = QtGui.QLineEdit()
-    floating_omegaini_auto = QtGui.QCheckBox("Auto ")
-    floating_omegaini_auto.toggled.connect(on_omegaini_auto)
-    floating_omegaini_layout.addWidget(floating_omegaini_label)
-    floating_omegaini_layout.addWidget(floating_omegaini_label_x)
-    floating_omegaini_layout.addWidget(floating_omegaini_input_x)
-    floating_omegaini_layout.addWidget(floating_omegaini_label_y)
-    floating_omegaini_layout.addWidget(floating_omegaini_input_y)
-    floating_omegaini_layout.addWidget(floating_omegaini_label_z)
-    floating_omegaini_layout.addWidget(floating_omegaini_input_z)
-    floating_omegaini_layout.addWidget(floating_omegaini_auto)
-
-    floating_props_layout.addLayout(floating_props_massrhop_layout)
-    floating_props_layout.addLayout(floating_center_layout)
-    floating_props_layout.addLayout(floating_inertia_layout)
-    floating_props_layout.addLayout(floating_velini_layout)
-    floating_props_layout.addLayout(floating_omegaini_layout)
-    floating_props_layout.addStretch(1)
-    floating_props_group.setLayout(floating_props_layout)
-
-    buttons_layout = QtGui.QHBoxLayout()
-    buttons_layout.addStretch(1)
-    buttons_layout.addWidget(ok_button)
-    buttons_layout.addWidget(cancel_button)
-
-    floatings_window_layout = QtGui.QVBoxLayout()
-    floatings_window_layout.addLayout(is_floating_layout)
-    floatings_window_layout.addWidget(floating_props_group)
-    floatings_window_layout.addLayout(buttons_layout)
-
-    floatings_window.setLayout(floatings_window_layout)
-
-    if str(target_mk) in data['floating_mks'].keys():
-        is_floating_selector.setCurrentIndex(0)
-        on_floating_change(0)
-        floating_props_group.setEnabled(True)
-        floating_props_massrhop_selector.setCurrentIndex(data['floating_mks'][str(target_mk)].mass_density_type)
-        floating_props_massrhop_input.setText(str(data['floating_mks'][str(target_mk)].mass_density_value))
-        if len(data['floating_mks'][str(target_mk)].gravity_center) == 0:
-            floating_center_input_x.setText("0")
-            floating_center_input_y.setText("0")
-            floating_center_input_z.setText("0")
-        else:
-            floating_center_input_x.setText(str(data['floating_mks'][str(target_mk)].gravity_center[0]))
-            floating_center_input_y.setText(str(data['floating_mks'][str(target_mk)].gravity_center[1]))
-            floating_center_input_z.setText(str(data['floating_mks'][str(target_mk)].gravity_center[2]))
-
-        if len(data['floating_mks'][str(target_mk)].inertia) == 0:
-            floating_inertia_input_x.setText("0")
-            floating_inertia_input_y.setText("0")
-            floating_inertia_input_z.setText("0")
-        else:
-            floating_inertia_input_x.setText(str(data['floating_mks'][str(target_mk)].inertia[0]))
-            floating_inertia_input_y.setText(str(data['floating_mks'][str(target_mk)].inertia[1]))
-            floating_inertia_input_z.setText(str(data['floating_mks'][str(target_mk)].inertia[2]))
-
-        if len(data['floating_mks'][str(target_mk)].initial_linear_velocity) == 0:
-            floating_velini_input_x.setText("0")
-            floating_velini_input_y.setText("0")
-            floating_velini_input_z.setText("0")
-        else:
-            floating_velini_input_x.setText(
-                str(data['floating_mks'][str(target_mk)].initial_linear_velocity[0]))
-            floating_velini_input_y.setText(str(data['floating_mks'][str(target_mk)].initial_linear_velocity[1]))
-            floating_velini_input_z.setText(str(data['floating_mks'][str(target_mk)].initial_linear_velocity[2]))
-
-        if len(data['floating_mks'][str(target_mk)].initial_angular_velocity) == 0:
-            floating_omegaini_input_x.setText("0")
-            floating_omegaini_input_y.setText("0")
-            floating_omegaini_input_z.setText("0")
-        else:
-            floating_omegaini_input_x.setText(
-                str(data['floating_mks'][str(target_mk)].initial_angular_velocity[0]))
-            floating_omegaini_input_y.setText(str(data['floating_mks'][str(target_mk)].initial_angular_velocity[1]))
-            floating_omegaini_input_z.setText(str(data['floating_mks'][str(target_mk)].initial_angular_velocity[2]))
-
-        floating_center_auto.setCheckState(
-            QtCore.Qt.Checked if len(data['floating_mks'][str(target_mk)].gravity_center) == 0 else QtCore.Qt.Unchecked
-        )
-        floating_inertia_auto.setCheckState(
-            QtCore.Qt.Checked if len(data['floating_mks'][str(target_mk)].inertia) == 0 else QtCore.Qt.Unchecked
-        )
-        floating_velini_auto.setCheckState(
-            QtCore.Qt.Checked if len(data['floating_mks'][str(target_mk)].initial_linear_velocity) == 0 else QtCore.Qt.Unchecked
-        )
-        floating_omegaini_auto.setCheckState(
-            QtCore.Qt.Checked if len(data['floating_mks'][str(target_mk)].initial_angular_velocity) == 0 else QtCore.Qt.Unchecked
-        )
-    else:
-        is_floating_selector.setCurrentIndex(1)
-        on_floating_change(1)
-        floating_props_group.setEnabled(False)
-        is_floating_selector.setCurrentIndex(1)
-        floating_props_massrhop_selector.setCurrentIndex(1)
-        floating_props_massrhop_input.setText("1000")
-        floating_center_input_x.setText("0")
-        floating_center_input_y.setText("0")
-        floating_center_input_z.setText("0")
-        floating_inertia_input_x.setText("0")
-        floating_inertia_input_y.setText("0")
-        floating_inertia_input_z.setText("0")
-        floating_velini_input_x.setText("0")
-        floating_velini_input_y.setText("0")
-        floating_velini_input_z.setText("0")
-        floating_omegaini_input_x.setText("0")
-        floating_omegaini_input_y.setText("0")
-        floating_omegaini_input_z.setText("0")
-
-        floating_center_auto.setCheckState(QtCore.Qt.Checked)
-        floating_inertia_auto.setCheckState(QtCore.Qt.Checked)
-        floating_velini_auto.setCheckState(QtCore.Qt.Checked)
-        floating_omegaini_auto.setCheckState(QtCore.Qt.Checked)
-
-    floatings_window.exec_()
+        wall_prop.setEnabled(False)
+        faces_status(selection)
 
 
 def initials_change():
-    """ Defines a window with initials properties. """
-    # TODO: This should be implemented as a custom class like InitialsDialog(QtGui.QDialog)
-    initials_window = QtGui.QDialog()
-    initials_window.setWindowTitle(__("Initials configuration"))
-    ok_button = QtGui.QPushButton(__("Ok"))
-    cancel_button = QtGui.QPushButton(__("Cancel"))
-    target_mk = int(data['simobjects'][FreeCADGui.Selection.getSelection()[0].Name][0])
-
-    # Ok button handler
-    def on_ok():
-        guiutils.info_dialog(__("This will apply the initials properties to all objects with mkfluid = ") + str(target_mk))
-        if has_initials_selector.currentIndex() == 1:
-            # Initials false
-            if str(target_mk) in data['initials_mks'].keys():
-                data['initials_mks'].pop(str(target_mk), None)
-        else:
-            # Initials true
-            # Structure: InitialsProperty Object
-            data['initials_mks'][str(target_mk)] = InitialsProperty(
-                mk=target_mk,
-                force=[
-                    float(initials_vector_input_x.text()),
-                    float(initials_vector_input_y.text()),
-                    float(initials_vector_input_z.text())
-                ])
-        initials_window.accept()
-
-    # Cancel button handler
-    def on_cancel():
-        initials_window.reject()
-
-    # Initials enable/disable dropdown handler
-    def on_initials_change(index):
-        if index == 0:
-            initials_props_group.setEnabled(True)
-        else:
-            initials_props_group.setEnabled(False)
-
-    ok_button.clicked.connect(on_ok)
-    cancel_button.clicked.connect(on_cancel)
-
-    has_initials_layout = QtGui.QHBoxLayout()
-    has_initials_label = QtGui.QLabel(__("Set initials: "))
-    has_initials_label.setToolTip(__("Sets the current initial movement vector."))
-    has_initials_selector = QtGui.QComboBox()
-    has_initials_selector.insertItems(0, ['True', 'False'])
-    has_initials_selector.currentIndexChanged.connect(on_initials_change)
-    has_initials_targetlabel = QtGui.QLabel(__("Target MKFluid: ") + str(target_mk))
-    has_initials_layout.addWidget(has_initials_label)
-    has_initials_layout.addWidget(has_initials_selector)
-    has_initials_layout.addStretch(1)
-    has_initials_layout.addWidget(has_initials_targetlabel)
-
-    initials_props_group = QtGui.QGroupBox(__("Initials properties"))
-    initials_props_layout = QtGui.QVBoxLayout()
-
-    initials_vector_layout = QtGui.QHBoxLayout()
-    initials_vector_label = QtGui.QLabel(__("Movement vector: "))
-    initials_vector_label.setToolTip(__("Sets the mk group movement vector."))
-    initials_vector_label_x = QtGui.QLabel("X")
-    initials_vector_input_x = QtGui.QLineEdit()
-    initials_vector_label_y = QtGui.QLabel("Y")
-    initials_vector_input_y = QtGui.QLineEdit()
-    initials_vector_label_z = QtGui.QLabel("Z")
-    initials_vector_input_z = QtGui.QLineEdit()
-    initials_vector_layout.addWidget(initials_vector_label)
-    initials_vector_layout.addWidget(initials_vector_label_x)
-    initials_vector_layout.addWidget(initials_vector_input_x)
-    initials_vector_layout.addWidget(initials_vector_label_y)
-    initials_vector_layout.addWidget(initials_vector_input_y)
-    initials_vector_layout.addWidget(initials_vector_label_z)
-    initials_vector_layout.addWidget(initials_vector_input_z)
-
-    initials_props_layout.addLayout(initials_vector_layout)
-    initials_props_layout.addStretch(1)
-    initials_props_group.setLayout(initials_props_layout)
-
-    buttons_layout = QtGui.QHBoxLayout()
-    buttons_layout.addStretch(1)
-    buttons_layout.addWidget(ok_button)
-    buttons_layout.addWidget(cancel_button)
-
-    initials_window_layout = QtGui.QVBoxLayout()
-    initials_window_layout.addLayout(has_initials_layout)
-    initials_window_layout.addWidget(initials_props_group)
-    initials_window_layout.addLayout(buttons_layout)
-
-    initials_window.setLayout(initials_window_layout)
-
-    if str(target_mk) in data['initials_mks'].keys():
-        has_initials_selector.setCurrentIndex(0)
-        on_initials_change(0)
-        initials_props_group.setEnabled(True)
-        initials_vector_input_x.setText(str(data['initials_mks'][str(target_mk)].force[0]))
-        initials_vector_input_y.setText(str(data['initials_mks'][str(target_mk)].force[1]))
-        initials_vector_input_z.setText(str(data['initials_mks'][str(target_mk)].force[2]))
-    else:
-        has_initials_selector.setCurrentIndex(1)
-        on_initials_change(1)
-        initials_props_group.setEnabled(False)
-        has_initials_selector.setCurrentIndex(1)
-        initials_vector_input_x.setText("0")
-        initials_vector_input_y.setText("0")
-        initials_vector_input_z.setText("0")
-
-    initials_window.exec_()
+    dsphwidgets.InitialsDialog(data)
 
 
 def motion_change():
-    """ Defines a window with motion properties. """
-    # TODO: BIG Change. This should be implemented as a custom class like MovementDialog(QtGui.QDialog)
-    # This is a big dialog with complex inner workings (Movements, motions, special ones, combined ones... etc)
-    # but it should be changed for something more readable and maintainable, not inside this function.
+    dsphwidgets.MovementDialog(data)
 
-    motion_window = QtGui.QDialog()
-    motion_window.setMinimumSize(1400, 650)
-    motion_window.setWindowTitle(__("Motion configuration"))
-    ok_button = QtGui.QPushButton(__("Ok"))
-    cancel_button = QtGui.QPushButton(__("Cancel"))
-    notice_label = QtGui.QLabel("")
-    notice_label.setStyleSheet("QLabel { color : red; }")
-    target_mk = int(data['simobjects'][FreeCADGui.Selection.getSelection()[0].Name][0])
-    movements_selected = list(data["motion_mks"].get(target_mk, list()))
 
-    def on_ok():
-        guiutils.info_dialog(__("This will apply the motion properties to all objects with mkbound = ") + str(target_mk))
-        if has_motion_selector.currentIndex() == 0:
-            # True has been selected
-            # Reinstance the list and copy every movement selected to avoid referencing problems.
-            data["motion_mks"][target_mk] = list()
-            for movement in movements_selected:
-                data["motion_mks"][target_mk].append(movement)
-        elif has_motion_selector.currentIndex() == 1:
-            # False has been selected
-            data["motion_mks"].pop(target_mk, None)
-        motion_window.accept()
+def floatstate_change():
+    dsphwidgets.FloatStateDialog(data)
 
-    def on_cancel():
-        motion_window.reject()
 
-    def on_motion_change(index):
-        """ Set motion action. Enables or disables parts of the window depending
-        on what option was selected. """
-        if index == 0:
-            movement_list_groupbox.setEnabled(True)
-            timeline_groupbox.setEnabled(True)
-            actions_groupbox.setEnabled(True)
-            timeline_list_table.setEnabled(False)
-            actions_groupbox_table.setEnabled(False)
+def faces_change():
+    dsphwidgets.FacesDialog(data)
 
-            # Put a placeholder in the table
-            timeline_list_table.clearContents()
-            timeline_list_table.setRowCount(1)
-            timeline_list_table.setCellWidget(0, 0, dsphwidgets.MovementTimelinePlaceholder())
-        else:
-            movement_list_groupbox.setEnabled(False)
-            timeline_groupbox.setEnabled(False)
-            actions_groupbox.setEnabled(False)
 
-    ok_button.clicked.connect(on_ok)
-    cancel_button.clicked.connect(on_cancel)
+def faces_status(selection):
 
-    has_motion_layout = QtGui.QHBoxLayout()
-    has_motion_label = QtGui.QLabel(__("Set motion: "))
-    has_motion_label.setToolTip(__("Enables motion for the selected MKBound"))
-    has_motion_selector = QtGui.QComboBox()
-    has_motion_selector.insertItems(0, ["True", "False"])
-    has_motion_selector.currentIndexChanged.connect(on_motion_change)
-    has_motion_helplabel = QtGui.QLabel(
-        "<a href='http://design.sphysics.org/wiki/doku.php?id=featreference#configure_object_motion'>{}</a>".format(__("Movement Help")))
-    has_motion_helplabel.setTextFormat(QtCore.Qt.RichText)
-    has_motion_helplabel.setTextInteractionFlags(
-        QtCore.Qt.TextBrowserInteraction)
-    has_motion_helplabel.setOpenExternalLinks(True)
-    has_motion_targetlabel = QtGui.QLabel(__("Target MKBound: ") + str(target_mk))
-    has_motion_layout.addWidget(has_motion_label)
-    has_motion_layout.addWidget(has_motion_selector)
-    has_motion_layout.addStretch(1)
-    has_motion_layout.addWidget(has_motion_helplabel)
-    has_motion_layout.addWidget(has_motion_targetlabel)
-
-    motion_features_layout = QtGui.QVBoxLayout()
-    motion_features_splitter = QtGui.QSplitter()
-
-    movement_list_groupbox = QtGui.QGroupBox(__("Global Movements"))
-    movement_list_groupbox_layout = QtGui.QVBoxLayout()
-
-    movement_list_table = QtGui.QTableWidget(1, 2)
-    movement_list_table.setSelectionBehavior(
-        QtGui.QAbstractItemView.SelectItems)
-    movement_list_table.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-    movement_list_table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
-    movement_list_table.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
-    movement_list_table.horizontalHeader().setResizeMode(1, QtGui.QHeaderView.ResizeToContents)
-
-    movement_list_table.verticalHeader().setVisible(False)
-    movement_list_table.horizontalHeader().setVisible(False)
-
-    movement_list_groupbox_layout.addWidget(movement_list_table)
-    movement_list_groupbox.setLayout(movement_list_groupbox_layout)
-
-    timeline_groupbox = QtGui.QGroupBox(__("Timeline for the selected movement"))
-    timeline_groupbox_layout = QtGui.QVBoxLayout()
-
-    timeline_list_table = QtGui.QTableWidget(0, 1)
-    timeline_list_table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
-    timeline_list_table.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-    timeline_list_table.verticalHeader().setVisible(False)
-    timeline_list_table.horizontalHeader().setVisible(False)
-    timeline_list_table.resizeRowsToContents()
-
-    timeline_groupbox_layout.addWidget(timeline_list_table)
-    timeline_groupbox.setLayout(timeline_groupbox_layout)
-
-    actions_groupbox = QtGui.QGroupBox(__("Available actions"))
-    actions_groupbox_layout = QtGui.QVBoxLayout()
-
-    actions_groupbox_table = QtGui.QTableWidget(0, 1)
-    actions_groupbox_table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
-    actions_groupbox_table.verticalHeader().setVisible(False)
-    actions_groupbox_table.horizontalHeader().setVisible(False)
-
-    actions_groupbox_layout.addWidget(actions_groupbox_table)
-    actions_groupbox.setLayout(actions_groupbox_layout)
-
-    motion_features_splitter.addWidget(movement_list_groupbox)
-    motion_features_splitter.addWidget(timeline_groupbox)
-    motion_features_splitter.addWidget(actions_groupbox)
-    motion_features_splitter.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-    motion_features_layout.addWidget(motion_features_splitter)
-
-    buttons_layout = QtGui.QHBoxLayout()
-    buttons_layout.addWidget(notice_label)
-    buttons_layout.addStretch(1)
-    buttons_layout.addWidget(ok_button)
-    buttons_layout.addWidget(cancel_button)
-
-    motion_window_layout = QtGui.QVBoxLayout()
-    motion_window_layout.addLayout(has_motion_layout)
-    motion_window_layout.addLayout(motion_features_layout)
-    motion_window_layout.addLayout(buttons_layout)
-
-    motion_window.setLayout(motion_window_layout)
-
-    def check_movement_compatibility(target_movement):
-        # Wave generators are exclusive
-        if isinstance(target_movement, SpecialMovement):
-            notice_label.setText("Notice: Wave generators and file movements are exclusive. "
-                                 "All movements are disabled when using one.")
-            del movements_selected[:]
-        elif isinstance(target_movement, Movement):
-            for index, ms in enumerate(movements_selected):
-                if isinstance(ms, SpecialMovement):
-                    movements_selected.pop(index)
-                    notice_label.setText("Notice: Regular movements are not compatible with wave generators and file movements.")
-
-    # Movements table actions
-    def on_check_movement(index, checked):
-        """ Add or delete a movement from the temporal list of selected movements. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        target_movement = data["global_movements"][index]
-        if checked:
-            check_movement_compatibility(target_movement)
-            movements_selected.append(target_movement)
-        else:
-            movements_selected.remove(target_movement)
-        refresh_movements_table()
-
-    def on_loop_movement(index, checked):
-        """ Make a movement loop itself """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        data["global_movements"][index].set_loop(checked)
-
-    def on_delete_movement(index):
-        """ Remove a movement from the project. """
-        try:
-            movements_selected.remove(data["global_movements"][index])
-            # Reset the notice label if a valid change is made
-            notice_label.setText("")
-        except ValueError:
-            # Movement wasn't selected
-            pass
-        data["global_movements"].pop(index)
-        refresh_movements_table()
-        on_movement_selected(timeline_list_table.rowCount() - 1, None)
-
-    def on_new_movement():
-        """ Creates a movement on the project. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        to_add = Movement(name="New Movement")
-        data["global_movements"].append(to_add)
-        movements_selected.append(to_add)
-        check_movement_compatibility(to_add)
-
-        refresh_movements_table()
-
-    def on_new_wave_generator(action):
-        """ Creates a movement on the project. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if __("Movement") in action.text():
-            on_new_movement()
-            return
-        if __("Regular wave generator (Piston)") in action.text():
-            to_add = SpecialMovement(generator=RegularPistonWaveGen(), name="Regular Wave Generator (Piston)")
-        if __("Irregular wave generator (Piston)") in action.text():
-            to_add = SpecialMovement(generator=IrregularPistonWaveGen(), name="Irregular Wave Generator (Piston)")
-        if __("Regular wave generator (Flap)") in action.text():
-            to_add = SpecialMovement(generator=RegularFlapWaveGen(), name="Regular Wave Generator (Flap)")
-        if __("Irregular wave generator (Flap)") in action.text():
-            to_add = SpecialMovement(generator=IrregularFlapWaveGen(), name="Irregular Wave Generator (Flap)")
-        if __("Linear motion from a file") in action.text():
-            to_add = SpecialMovement(generator=FileGen(), name="Linear motion from a file")
-        if __("Rotation from a file") in action.text():
-            to_add = SpecialMovement(generator=RotationFileGen(), name="Rotation from a file")
-
-        to_add.generator.parent_movement = to_add
-        data["global_movements"].append(to_add)
-        check_movement_compatibility(to_add)
-        movements_selected.append(to_add)
-
-        refresh_movements_table()
-
-    def on_movement_name_change(row, column):
-        """ Changes the name of a movement on the project. """
-        target_item = movement_list_table.item(row, column)
-        if target_item is not None and data["global_movements"][row].name != target_item.text():
-            # Reset the notice label if a valid change is made
-            notice_label.setText("")
-            data["global_movements"][row].name = target_item.text()
-
-    def on_timeline_item_change(index, motion_object):
-        """ Changes the values of an item on the timeline. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if isinstance(motion_object, WaveGen):
-            motion_object.parent_movement.set_wavegen(motion_object)
-        else:
-            motion_object.parent_movement.motion_list[index] = motion_object
-
-    def on_timeline_item_delete(index, motion_object):
-        """ Deletes an item from the timeline. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        motion_object.parent_movement.motion_list.pop(index)
-        on_movement_selected(movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_timeline_item_order_up(index):
-        # Reset the notice label if a valid change is made
-        notice_label.setText("")
-        movement = data["global_movements"][movement_list_table.selectedIndexes()[0].row()]
-        movement.motion_list.insert(index - 1, movement.motion_list.pop(index))
-        on_movement_selected(movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_timeline_item_order_down(index):
-        # Reset the notice label if a valid change is made
-        notice_label.setText("")
-        movement = data["global_movements"][movement_list_table.selectedIndexes()[0].row()]
-        movement.motion_list.insert(index + 1, movement.motion_list.pop(index))
-        on_movement_selected(movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_movement_selected(row, _):
-        """ Shows the timeline for the selected movement. """
-        try:
-            target_movement = data["global_movements"][row]
-        except IndexError:
-            timeline_list_table.clearContents()
-            timeline_list_table.setEnabled(False)
-            timeline_list_table.setRowCount(1)
-            timeline_list_table.setCellWidget(0, 0, dsphwidgets.MovementTimelinePlaceholder())
-            return
-        timeline_list_table.clearContents()
-
-        # Reset the notice label if a valid change is made
-        notice_label.setText("")
-
-        if isinstance(target_movement, Movement):
-            timeline_list_table.setRowCount(len(target_movement.motion_list))
-            timeline_list_table.setEnabled(True)
-            actions_groupbox_table.setEnabled(True)
-
-            current_row = 0
-            for motion in target_movement.motion_list:
-                if isinstance(motion, RectMotion):
-                    target_to_put = dsphwidgets.RectilinearMotionTimeline(current_row, motion)
-                elif isinstance(motion, WaitMotion):
-                    target_to_put = dsphwidgets.WaitMotionTimeline(current_row, motion)
-                elif isinstance(motion, AccRectMotion):
-                    target_to_put = dsphwidgets.AccRectilinearMotionTimeline(current_row, motion)
-                elif isinstance(motion, RotMotion):
-                    target_to_put = dsphwidgets.RotationalMotionTimeline(current_row, motion)
-                elif isinstance(motion, AccRotMotion):
-                    target_to_put = dsphwidgets.AccRotationalMotionTimeline(current_row, motion)
-                elif isinstance(motion, AccCirMotion):
-                    target_to_put = dsphwidgets.AccCircularMotionTimeline(current_row, motion)
-                elif isinstance(motion, RotSinuMotion):
-                    target_to_put = dsphwidgets.RotSinuMotionTimeline(current_row, motion)
-                elif isinstance(motion, CirSinuMotion):
-                    target_to_put = dsphwidgets.CirSinuMotionTimeline(current_row, motion)
-                elif isinstance(motion, RectSinuMotion):
-                    target_to_put = dsphwidgets.RectSinuMotionTimeline(current_row, motion)
-                else:
-                    raise NotImplementedError("The type of movement: {} is not implemented.".format(
-                        str(motion.__class__.__name__)))
-
-                target_to_put.changed.connect(on_timeline_item_change)
-                target_to_put.deleted.connect(on_timeline_item_delete)
-                target_to_put.order_up.connect(on_timeline_item_order_up)
-                target_to_put.order_down.connect(on_timeline_item_order_down)
-                timeline_list_table.setCellWidget(current_row, 0, target_to_put)
-
-                if current_row is 0:
-                    target_to_put.disable_order_up_button()
-                elif current_row is len(target_movement.motion_list) - 1:
-                    target_to_put.disable_order_down_button()
-
-                current_row += 1
-        elif isinstance(target_movement, SpecialMovement):
-            timeline_list_table.setRowCount(1)
-            timeline_list_table.setEnabled(True)
-            actions_groupbox_table.setEnabled(False)
-
-            if isinstance(target_movement.generator, RegularPistonWaveGen):
-                target_to_put = dsphwidgets.RegularPistonWaveMotionTimeline(target_movement.generator)
-            elif isinstance(target_movement.generator, IrregularPistonWaveGen):
-                target_to_put = dsphwidgets.IrregularPistonWaveMotionTimeline(target_movement.generator)
-            if isinstance(target_movement.generator, RegularFlapWaveGen):
-                target_to_put = dsphwidgets.RegularFlapWaveMotionTimeline(target_movement.generator)
-            elif isinstance(target_movement.generator, IrregularFlapWaveGen):
-                target_to_put = dsphwidgets.IrregularFlapWaveMotionTimeline(target_movement.generator)
-            elif isinstance(target_movement.generator, FileGen):
-                target_to_put = dsphwidgets.FileMotionTimeline(target_movement.generator, data['project_path'])
-            elif isinstance(target_movement.generator, RotationFileGen):
-                target_to_put = dsphwidgets.RotationFileMotionTimeline(target_movement.generator, data['project_path'])
-
-            target_to_put.changed.connect(on_timeline_item_change)
-            timeline_list_table.setCellWidget(0, 0, target_to_put)
-
-    # Populate case defined movements
-    def refresh_movements_table():
-        """ Refreshes the movement table. """
-        movement_list_table.clearContents()
-        movement_list_table.setRowCount(len(data["global_movements"]) + 1)
-        current_row = 0
-        for movement in data["global_movements"]:
-            movement_list_table.setItem(current_row, 0, QtGui.QTableWidgetItem(movement.name))
-            try:
-                has_loop = movement.loop
-            except AttributeError:
-                has_loop = False
-            if isinstance(movement, Movement):
-                movement_actions = dsphwidgets.MovementActions(current_row, movement in movements_selected, has_loop)
-                movement_actions.loop.connect(on_loop_movement)
-            elif isinstance(movement, SpecialMovement):
-                movement_actions = dsphwidgets.WaveMovementActions(current_row, movement in movements_selected)
-
-            movement_actions.delete.connect(on_delete_movement)
-            movement_actions.use.connect(on_check_movement)
-            movement_list_table.setCellWidget(current_row, 1, movement_actions)
-
-            current_row += 1
-        create_new_movement_button = QtGui.QToolButton()
-        create_new_movement_button.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
-        create_new_movement_button.setText(__("Create New"))
-        create_new_movement_menu = QtGui.QMenu()
-        create_new_movement_menu.addAction(guiutils.get_icon("movement.png"), __("Movement"))
-        create_new_movement_menu.addAction(guiutils.get_icon("regular_wave.png"), __("Regular wave generator (Piston)"))
-        create_new_movement_menu.addAction(guiutils.get_icon("irregular_wave.png"), __("Irregular wave generator (Piston)"))
-        create_new_movement_menu.addAction(guiutils.get_icon("regular_wave.png"), __("Regular wave generator (Flap)"))
-        create_new_movement_menu.addAction(guiutils.get_icon("irregular_wave.png"), __("Irregular wave generator (Flap)"))
-        create_new_movement_menu.addAction(guiutils.get_icon("file_mov.png"), __("Linear motion from a file"))
-        create_new_movement_menu.addAction(guiutils.get_icon("file_mov.png"), __("Rotation from a file"))
-        create_new_movement_button.setMenu(create_new_movement_menu)
-        create_new_movement_button.clicked.connect(on_new_movement)
-        create_new_movement_menu.triggered.connect(on_new_wave_generator)
-        movement_list_table.setCellWidget(current_row, 1, create_new_movement_button)
-        movement_list_table.setCellWidget(current_row, 0, QtGui.QWidget())
-
-    refresh_movements_table()
-    movement_list_table.cellChanged.connect(on_movement_name_change)
-    movement_list_table.cellClicked.connect(on_movement_selected)
-
-    # Possible actions for adding motions to a movement
-    def on_add_delay():
-        """ Adds a WaitMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(WaitMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_rectilinear():
-        """ Adds a RectMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(RectMotion())
-                on_movement_selected(movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_accrectilinear():
-        """ Adds a AccRectMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(AccRectMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_rotational():
-        """ Adds a RotMotion to the timeline of the selected movement. """
-        notice_label.setText(
-            "")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(RotMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_acc_rotational():
-        """ Adds a AccRotMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(AccRotMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_acc_circular():
-        """ Adds a AccCirMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(AccCirMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_sinu_rot():
-        """ Adds a RotSinuMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(RotSinuMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_sinu_cir():
-        """ Adds a CirSinuMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(CirSinuMotion())
-                on_movement_selected(
-                    movement_list_table.selectedIndexes()[0].row(), None)
-
-    def on_add_sinu_rect():
-        """ Adds a RectSinuMotion to the timeline of the selected movement. """
-        notice_label.setText("")  # Reset the notice label if a valid change is made
-        if len(movement_list_table.selectedIndexes()) > 0:
-            if movement_list_table.selectedIndexes()[0].row() is not len(data["global_movements"]):
-                data["global_movements"][movement_list_table.selectedIndexes()[0].row()].add_motion(RectSinuMotion())
-                on_movement_selected(movement_list_table.selectedIndexes()[0].row(), None)
-
-    actions_groupbox_table.setRowCount(9)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add a delay"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_delay)
-    actions_groupbox_table.setCellWidget(0, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add a rectilinear motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_rectilinear)
-    actions_groupbox_table.setCellWidget(1, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add an accelerated rectilinear motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_accrectilinear)
-    actions_groupbox_table.setCellWidget(2, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add a rotational motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_rotational)
-    actions_groupbox_table.setCellWidget(3, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add an accelerated rotational motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_acc_rotational)
-    actions_groupbox_table.setCellWidget(4, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add an accelerated circular motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_acc_circular)
-    actions_groupbox_table.setCellWidget(5, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add a sinusoidal rotational motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_sinu_rot)
-    actions_groupbox_table.setCellWidget(6, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add a sinusoidal circular motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_sinu_cir)
-    actions_groupbox_table.setCellWidget(7, 0, bt_to_add)
-    bt_to_add = QtGui.QPushButton(guiutils.get_icon("left-arrow.png"), __("Add a sinusoidal rectilinear motion"))
-    bt_to_add.setStyleSheet("text-align: left")
-    bt_to_add.clicked.connect(on_add_sinu_rect)
-    actions_groupbox_table.setCellWidget(8, 0, bt_to_add)
-
-    # Set motion suscription for this mk
-    if data["motion_mks"].get(target_mk, None) is None:
-        has_motion_selector.setCurrentIndex(1)
+    if wall_prop.isEnabled():
+        pass
     else:
-        has_motion_selector.setCurrentIndex(0)
+        target_mk = int(data['simobjects'][selection.Name][0])
+        name = selection.Label
 
-    motion_window.exec_()
+        if (str(target_mk), name) in data['faces'].keys():
+            data['faces'].pop((str(target_mk), name), None)
 
 
 # Property change widgets
@@ -4585,6 +3490,8 @@ fillmode_prop = QtGui.QComboBox()
 floatstate_prop = QtGui.QPushButton(__("Configure"))
 initials_prop = QtGui.QPushButton(__("Configure"))
 motion_prop = QtGui.QPushButton(__("Configure"))
+wall_prop = QtGui.QPushButton(__("Configure"))
+wall_prop.setEnabled(False)
 mkgroup_prop.setRange(0, 240)
 objtype_prop.insertItems(0, ['Fluid', 'Bound'])
 fillmode_prop.insertItems(1, ['Full', 'Solid', 'Face', 'Wire'])
@@ -4594,12 +3501,15 @@ fillmode_prop.currentIndexChanged.connect(fillmode_change)
 floatstate_prop.clicked.connect(floatstate_change)
 initials_prop.clicked.connect(initials_change)
 motion_prop.clicked.connect(motion_change)
+wall_prop.clicked.connect(faces_change)
 object_property_table.setCellWidget(0, 1, objtype_prop)
 object_property_table.setCellWidget(1, 1, mkgroup_prop)
 object_property_table.setCellWidget(2, 1, fillmode_prop)
 object_property_table.setCellWidget(3, 1, floatstate_prop)
 object_property_table.setCellWidget(4, 1, initials_prop)
 object_property_table.setCellWidget(5, 1, motion_prop)
+object_property_table.setCellWidget(6, 1, wall_prop)
+
 
 # Dock the widget to the left side of screen
 fc_main_window.addDockWidget(QtCore.Qt.LeftDockWidgetArea, properties_widget)
@@ -4872,11 +3782,11 @@ def on_tree_item_selection_change():
     objectlist_table.clear()
     objectlist_table.setEnabled(True)
     if len(data['export_order']) == 0:
-        data['export_order'] = data['simobjects'].keys()
+        data['export_order'] = list(data['simobjects'].keys())
 
     # Substract one that represent case limits object
     if "Case_Limits" in data['export_order']:
-        data['export_order'].remove("Case_Limits")
+        data['export_order'].remove('Case_Limits')
 
     objectlist_table.setRowCount(len(data['export_order']))
     current_row = 0

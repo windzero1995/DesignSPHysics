@@ -3301,7 +3301,7 @@ properties_scaff_widget = QtGui.QWidget()
 property_widget_layout = QtGui.QVBoxLayout()
 
 # Property table
-object_property_table = QtGui.QTableWidget(7, 2)
+object_property_table = QtGui.QTableWidget(8, 2)
 object_property_table.setMinimumHeight(220)
 object_property_table.setHorizontalHeaderLabels([__("Property Name"), __("Value")])
 object_property_table.verticalHeader().setVisible(False)
@@ -3348,16 +3348,11 @@ material_label = QtGui.QLabel("   {}".format(__("Material")))
 material_label.setToolTip(__("Sets material for this object"))
 motion_label = QtGui.QLabel("   {}".format(__("Motion")))
 motion_label.setToolTip(__("Sets motion for this object"))
+autofill_label = QtGui.QLabel("   {}".format(__("Autofill")))
+autofill_label.setToolTip(__("Sets autofill property for this imported geometry"))
 simplewall_label = QtGui.QLabel("   {}".format(__("Faces")))
 simplewall_label.setToolTip(__("Adds faces"))
 
-mkgroup_label.setAlignment(QtCore.Qt.AlignLeft)
-material_label.setAlignment(QtCore.Qt.AlignLeft)
-objtype_label.setAlignment(QtCore.Qt.AlignLeft)
-fillmode_label.setAlignment(QtCore.Qt.AlignLeft)
-floatstate_label.setAlignment(QtCore.Qt.AlignLeft)
-initials_label.setAlignment(QtCore.Qt.AlignLeft)
-motion_label.setAlignment(QtCore.Qt.AlignLeft)
 
 object_property_table.setCellWidget(0, 0, objtype_label)
 object_property_table.setCellWidget(1, 0, mkgroup_label)
@@ -3366,6 +3361,7 @@ object_property_table.setCellWidget(3, 0, floatstate_label)
 object_property_table.setCellWidget(4, 0, initials_label)
 object_property_table.setCellWidget(5, 0, motion_label)
 object_property_table.setCellWidget(6, 0, simplewall_label)
+object_property_table.setCellWidget(7, 0, autofill_label)
 
 
 def mkgroup_change(value):
@@ -3486,6 +3482,10 @@ def floatstate_change():
     dsphwidgets.FloatStateDialog(data)
 
 
+def autofill_change(check_state):
+    data['geo_autofill'][FreeCADGui.Selection.getSelection()[0].Name] = check_state == QtCore.Qt.CheckState.Checked
+
+
 def faces_change():
     dsphwidgets.FacesDialog(data)
 
@@ -3509,6 +3509,7 @@ fillmode_prop = QtGui.QComboBox()
 floatstate_prop = QtGui.QPushButton(__("Configure"))
 initials_prop = QtGui.QPushButton(__("Configure"))
 motion_prop = QtGui.QPushButton(__("Configure"))
+autofill_prop = QtGui.QCheckBox(__("Enabled"))
 wall_prop = QtGui.QPushButton(__("Configure"))
 wall_prop.setEnabled(False)
 mkgroup_prop.setRange(0, 240)
@@ -3520,6 +3521,7 @@ fillmode_prop.currentIndexChanged.connect(fillmode_change)
 floatstate_prop.clicked.connect(floatstate_change)
 initials_prop.clicked.connect(initials_change)
 motion_prop.clicked.connect(motion_change)
+autofill_prop.stateChanged.connect(autofill_change)
 wall_prop.clicked.connect(faces_change)
 object_property_table.setCellWidget(0, 1, objtype_prop)
 object_property_table.setCellWidget(1, 1, mkgroup_prop)
@@ -3528,6 +3530,7 @@ object_property_table.setCellWidget(3, 1, floatstate_prop)
 object_property_table.setCellWidget(4, 1, initials_prop)
 object_property_table.setCellWidget(5, 1, motion_prop)
 object_property_table.setCellWidget(6, 1, wall_prop)
+object_property_table.setCellWidget(7, 1, autofill_prop)
 
 
 # Dock the widget to the left side of screen
@@ -3587,7 +3590,7 @@ def remove_object_from_sim():
 def on_damping_config():
     """ Configures the damping configuration for the selected obejct """
     selection = FreeCADGui.Selection.getSelection()
-    guiutils.damping_config_window(data, selection[0].Name)
+    dsphwidgets.DampingConfigDialog(data, selection[0].Name)
 
 
 # Connects buttons to its functions
@@ -3775,6 +3778,20 @@ def on_tree_item_selection_change():
                         to_change.setEnabled(False)
                     else:
                         to_change.setEnabled(True)
+
+                # Autofill property configuration
+                to_change = object_property_table.cellWidget(7, 1)
+                if selection[0].Name in data['geo_autofill'].keys():
+                    to_change.setChecked(data['geo_autofill'][selection[0].Name])
+                else:
+                    to_change.setChecked(False)
+
+                if selection[0].TypeId == 'Mesh::Feature':
+                    # Object is an external mesh, enable autofill
+                    to_change.setEnabled(True)
+                else:
+                    # Autofill not supported, disable checkbox
+                    to_change.setEnabled(False)
 
             else:
                 if selection[0].InList == list():

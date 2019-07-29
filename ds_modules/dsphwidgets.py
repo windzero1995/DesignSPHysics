@@ -6419,7 +6419,7 @@ class ExecutionParametersDialog(QtGui.QDialog):
             self.data['posminxml'][0] = str(self.data['posmin'][1])
         elif self.data['posmin'][0] == 2:
             self.data['posminxml'][0] = 'default-' + str(self.data['posmin'][1])
-        elif data['posmin'][0] == 3:
+        elif self.data['posmin'][0] == 3:
             self.data['posminxml'][0] = 'default-' + str(self.data['posmin'][1]) + "%"
 
         if self.data['posmin'][2] == 0:
@@ -6446,7 +6446,7 @@ class ExecutionParametersDialog(QtGui.QDialog):
             self.data['posmaxxml'][0] = str(self.data['posmax'][1])
         elif self.data['posmax'][0] == 2:
             self.data['posmaxxml'][0] = 'default+' + str(self.data['posmax'][1])
-        elif data['posmax'][0] == 3:
+        elif self.data['posmax'][0] == 3:
             self.data['posmaxxml'][0] = 'default+' + str(self.data['posmax'][1]) + "%"
 
         if self.data['posmax'][2] == 0:

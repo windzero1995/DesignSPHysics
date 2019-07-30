@@ -7404,12 +7404,12 @@ class LinkHingeEdit(QtGui.QDialog):
                 self.data['link_hinge'][count][5] = float(self.stiffness_line_edit.text())
                 self.data['link_hinge'][count][6] = float(self.damping_line_edit.text())
 
-        if self.data['link_hinge'][count][1] != "" and self.data['link_hinge'][count][2] != "":
+        if self.data['link_hinge'][count][1] != "":
             LinkHingeEdit.accept(self)
         else:
             link_hinge_error_dialog = QtGui.QMessageBox()
             link_hinge_error_dialog.setWindowTitle(__("Error!"))
-            link_hinge_error_dialog.setText(__("bodies are necesary!"))
+            link_hinge_error_dialog.setText(__("At least one body is necessary."))
             link_hinge_error_dialog.setIcon(QtGui.QMessageBox.Critical)
             link_hinge_error_dialog.exec_()
 
@@ -7591,12 +7591,12 @@ class LinkLinearspringEdit(QtGui.QDialog):
                                                             float(self.vtk_radius_line_edit.text()),
                                                             float(self.vtk_length_line_edit.text())]
 
-        if self.data['link_linearspring'][count][1] != "" and self.data['link_linearspring'][count][2] != "":
+        if self.data['link_linearspring'][count][1] != "":
             LinkLinearspringEdit.accept(self)
         else:
             link_linearspring_error_dialog = QtGui.QMessageBox()
             link_linearspring_error_dialog.setWindowTitle(__("Error!"))
-            link_linearspring_error_dialog.setText(__("bodies are necesary!"))
+            link_linearspring_error_dialog.setText(__("At least one body is necessary"))
             link_linearspring_error_dialog.setIcon(QtGui.QMessageBox.Critical)
             link_linearspring_error_dialog.exec_()
 

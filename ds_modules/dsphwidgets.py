@@ -5624,34 +5624,34 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.viscoboundfactor_layout.addWidget(self.viscoboundfactor_label)
         self.viscoboundfactor_layout.addWidget(self.viscoboundfactor_input)
 
-        self.deltasph_en_layout = QtGui.QHBoxLayout()
-        self.deltasph_en_label = QtGui.QLabel("Enable DeltaSPH: ")
-        self.deltasph_en_input = QtGui.QComboBox()
-        self.deltasph_en_input.insertItems(0, ['No', 'Yes'])
-        self.deltasph_en_input.setCurrentIndex(int(self.data['deltasph_en']))
-        self.deltasph_en_input.currentIndexChanged.connect(self.on_deltasph_en_change)
+        self.densitydt_type_layout = QtGui.QHBoxLayout()
+        self.densitydt_type_label = QtGui.QLabel("Density Diffusion Term: ")
+        self.densitydt_type_input = QtGui.QComboBox()
+        self.densitydt_type_input.insertItems(0, ['None', 'Molteni', 'Fourtakas', 'Fourtakas (Full)'])
+        self.densitydt_type_input.setCurrentIndex(int(self.data['densitydt_type']))
+        self.densitydt_type_input.currentIndexChanged.connect(self.on_densitydt_type_change)
 
-        self.deltasph_en_layout.addWidget(self.deltasph_en_label)
-        self.deltasph_en_layout.addWidget(self.deltasph_en_input)
-        self.deltasph_en_layout.addStretch(1)
+        self.densitydt_type_layout.addWidget(self.densitydt_type_label)
+        self.densitydt_type_layout.addWidget(self.densitydt_type_input)
+        self.densitydt_type_layout.addStretch(1)
 
-        # DeltaSPH value
-        self.deltasph_layout = QtGui.QHBoxLayout()
-        self.deltasph_label = QtGui.QLabel("DeltaSPH value: ")
-        self.deltasph_input = FocusableLineEdit()
-        self.deltasph_input.setHelpText(utils.__(constants.HELP_DELTASPH))
-        self.deltasph_input.setMaxLength(10)
+        # densitydt value
+        self.densitydt_layout = QtGui.QHBoxLayout()
+        self.densitydt_label = QtGui.QLabel("DDT value: ")
+        self.densitydt_input = FocusableLineEdit()
+        self.densitydt_input.setHelpText(utils.__(constants.HELP_DENSITYDT))
+        self.densitydt_input.setMaxLength(10)
 
-        self.deltasph_input.focus.connect(self.on_help_focus)
+        self.densitydt_input.focus.connect(self.on_help_focus)
 
-        self.deltasph_input.setText(str(self.data['deltasph']))
-        self.deltasph_layout.addWidget(self.deltasph_label)
-        self.deltasph_layout.addWidget(self.deltasph_input)
+        self.densitydt_input.setText(str(self.data['densitydt_value']))
+        self.densitydt_layout.addWidget(self.densitydt_label)
+        self.densitydt_layout.addWidget(self.densitydt_input)
 
-        if self.deltasph_en_input.currentIndex() == 0:
-            self.deltasph_input.setEnabled(False)
+        if self.densitydt_type_input.currentIndex() == 0:
+            self.densitydt_input.setEnabled(False)
         else:
-            self.deltasph_input.setEnabled(True)
+            self.densitydt_input.setEnabled(True)
 
         self.shifting_layout = QtGui.QHBoxLayout()
         self.shifting_label = QtGui.QLabel("Shifting mode: ")
@@ -6125,8 +6125,8 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.ep_main_layout.addLayout(self.viscotreatment_layout)
         self.ep_main_layout.addLayout(self.visco_layout)
         self.ep_main_layout.addLayout(self.viscoboundfactor_layout)
-        self.ep_main_layout.addLayout(self.deltasph_en_layout)
-        self.ep_main_layout.addLayout(self.deltasph_layout)
+        self.ep_main_layout.addLayout(self.densitydt_type_layout)
+        self.ep_main_layout.addLayout(self.densitydt_layout)
         self.ep_main_layout.addLayout(self.shifting_layout)
         self.ep_main_layout.addLayout(self.shiftcoef_layout)
         self.ep_main_layout.addLayout(self.shifttfs_layout)
@@ -6177,13 +6177,13 @@ class ExecutionParametersDialog(QtGui.QDialog):
             "" if index == 0 else
             "m<span style='vertical-align:super'>2</span>/s")
 
-    # DeltaSPH enabled selector
-    def on_deltasph_en_change(self, index):
+    # DensityDT type selector
+    def on_densitydt_type_change(self, index):
         if index == 0:
-            self.deltasph_input.setEnabled(False)
+            self.densitydt_input.setEnabled(False)
         else:
-            self.deltasph_input.setEnabled(True)
-            self.deltasph_input.setText("0.1")
+            self.densitydt_input.setEnabled(True)
+            self.densitydt_input.setText("0.1")
 
     # Shifting mode
     def on_shifting_change(self, index):
@@ -6339,8 +6339,8 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.data['viscotreatment'] = self.viscotreatment_input.currentIndex() + 1
         self.data['visco'] = self.visco_input.text()
         self.data['viscoboundfactor'] = self.viscoboundfactor_input.text()
-        self.data['deltasph'] = self.deltasph_input.text()
-        self.data['deltasph_en'] = self.deltasph_en_input.currentIndex()
+        self.data['densitydt_type'] = self.densitydt_type_input.currentIndex()
+        self.data['densitydt_value'] = float(self.densitydt_input.text())
         self.data['shifting'] = str(self.shifting_input.currentIndex())
         self.data['shiftcoef'] = self.shiftcoef_input.text()
         self.data['shifttfs'] = self.shifttfs_input.text()

@@ -8243,6 +8243,8 @@ class InletZoneEdit(QtGui.QDialog):
         self.imposevelocity_combobox = QtGui.QComboBox()
         self.imposevelocity_combobox.insertItems(0,
                                                  [__("Fixed"), __("Variable"), __("Extrapolated"), __("Interpolated")])
+        self.imposevelocity_combobox.setItemData(1, 0, QtCore.Qt.UserRole - 1)
+        self.imposevelocity_combobox.setItemData(3, 0, QtCore.Qt.UserRole - 1)
         self.imposevelocity_velocity_label = QtGui.QLabel("Value: ")
         self.imposevelocity_velocity_line_edit = QtGui.QLineEdit(str(target_inlet_zone[4][1]))
         self.imposevelocity_velocity_units = QtGui.QLabel(__("m/s"))

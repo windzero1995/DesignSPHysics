@@ -5516,7 +5516,7 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.posdouble_label = QtGui.QLabel("Precision in particle interaction: ")
         self.posdouble_input = FocusableComboBox()
         self.posdouble_input.insertItems(0,
-                                    ['Double', 'Simple', 'Uses and saves double'])
+                                    ['Simple', 'Double', 'Uses and saves double'])
         self.posdouble_input.setCurrentIndex(int(self.data['posdouble']))
         self.posdouble_input.setHelpText(utils.__(constants.HELP_POSDOUBLE))
 
@@ -5529,7 +5529,7 @@ class ExecutionParametersDialog(QtGui.QDialog):
         self.stepalgorithm_layout = QtGui.QHBoxLayout()
         self.stepalgorithm_label = QtGui.QLabel("Step Algorithm: ")
         self.stepalgorithm_input = FocusableComboBox()
-        self.stepalgorithm_input.insertItems(0, ['Symplectic', 'Verlet'])
+        self.stepalgorithm_input.insertItems(0, ['Verlet', 'Symplectic'])
         self.stepalgorithm_input.setCurrentIndex(int(self.data['stepalgorithm']) - 1)
         self.stepalgorithm_input.setHelpText(utils.__(constants.HELP_STEPALGORITHM))
 

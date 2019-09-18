@@ -1417,8 +1417,7 @@ def on_ex_simulate():
         # Warning window about save_case
         run_warning_dialog = QtGui.QMessageBox()
         run_warning_dialog.setWindowTitle(__("Warning!"))
-        run_warning_dialog.setText(__("It is necessary that you run Run GenCase again, otherwise, maybe the results "
-                                      "obtained may not be as expected..."))
+        run_warning_dialog.setText(__("Please remember to run GenCase again if needed"))
         run_warning_dialog.setIcon(QtGui.QMessageBox.Warning)
         run_warning_dialog.exec_()
 
@@ -1485,6 +1484,7 @@ def on_ex_simulate():
             # Simulation went correctly
             data['simulation_done'] = True
             guiutils.widget_state_config(widget_state_elements, "sim finished")
+            run_dialog.run_group_label_simfinished.setText("<b>{}</b>".format(__("Simulation is finished")))
         else:
             # In case of an error
             if "exception" in str(output).lower():
